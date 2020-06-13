@@ -20,6 +20,8 @@ import { Link } from "react-router-dom";
 import Button from "@material-ui/core/Button";
 import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
+import useMediaQuery from "@material-ui/core/useMediaQuery";
+import { useTheme } from "@material-ui/core/styles";
 
 //Header elevator
 function ElevationScroll(props) {
@@ -76,6 +78,9 @@ const useStyles = makeStyles((theme) => ({
   },
   logo: {
     height: "4em",
+    [theme.breakpoints.down("md")]:{
+      height: "3em"
+    },
     padding: "0.5em",
   },
   logoContainer: {
@@ -115,6 +120,8 @@ const useStyles = makeStyles((theme) => ({
 
 export default function Header(props) {
   const classes = useStyles();
+  const theme = useTheme();
+  const matches = useMediaQuery(theme.breakpoints.down("md"))
   const [value, setValue] = useState(0);
   const [anchorEl, setAnchorEl] = useState(null);
   const [open, setOpen] = useState(false);
@@ -163,31 +170,31 @@ export default function Header(props) {
       case "/Offered":
         if (value !== 1) {
           setValue(1);
-         setSelectedIndex(0)
+          setSelectedIndex(0);
         }
         break;
-        case "/Writing":
-          if (value !== 1) {
-            setValue(1);
-           setSelectedIndex(1)
-          }
-          break;
-          case "/Robotics":
-            if (value !== 1) {
-              setValue(1);
-             setSelectedIndex(2)
-            }
-            break;
+      case "/Writing":
+        if (value !== 1) {
+          setValue(1);
+          setSelectedIndex(1);
+        }
+        break;
+      case "/Robotics":
+        if (value !== 1) {
+          setValue(1);
+          setSelectedIndex(2);
+        }
+        break;
       case "/About":
         if (value !== 2) {
           setValue(2);
-         // setSelectedIndex(1)
+          // setSelectedIndex(1)
         }
         break;
       case "/Contact":
         if (value !== 3) {
           setValue(3);
-         // setSelectedIndex(2)
+          // setSelectedIndex(2)
         }
         break;
       default:
@@ -195,63 +202,50 @@ export default function Header(props) {
     }
   }, [value]);
 
-  return (
+  const tabs = (
     <React.Fragment>
-      <ElevationScroll>
-        <AppBar position='fixed' color='secondary'>
-          <Toolbar disableGutters={false}>
-            <Button
-              disableRipple
-              className={classes.logoContainer}
-              component={Link}
-              to='/'
-              onClick={() => setValue(0)}
-            >
-              <img src={logo} alt='logo' className={classes.logo}></img>
-            </Button>
-
-            <Tabs
-              color='primary'
-              value={value}
-              onChange={handleChange}
-              variant='scrollable'
-              scrollButtons='on'
-              indicatorColor='primary'
-              textColor='primary'
-              aria-label='scrollable force tabs example'
-            >
-              <Tab
-                label='Home'
-                component={Link}
-                to='/'
-                icon={<PhoneIcon />}
-                {...a11yProps(0)}
-              />
-              <Tab
-                aria-owns={anchorEl ? "We offer" : undefined}
-                aria-haspopup={anchorEl ? "true" : undefined}
-                label='Offered'
-                to='/Offered'
-                component={Link}
-                onMouseOver={(event) => handleClick(event)}
-                icon={<FavoriteIcon />}
-                {...a11yProps(1)}
-              />
-              <Tab
-                label='About'
-                to='/About'
-                component={Link}
-                icon={<PersonPinIcon />}
-                {...a11yProps(2)}
-              />
-              <Tab
-                label='Contact'
-                to='/Contact'
-                component={Link}
-                icon={<HelpIcon />}
-                {...a11yProps(3)}
-              />
-              {/* <Tab
+      <Tabs
+        color='primary'
+        value={value}
+        onChange={handleChange}
+        variant='scrollable'
+        scrollButtons='on'
+        indicatorColor='primary'
+        textColor='primary'
+        aria-label='scrollable force tabs example'
+      >
+        <Tab
+          label='Home'
+          component={Link}
+          to='/'
+          icon={<PhoneIcon />}
+          {...a11yProps(0)}
+        />
+        <Tab
+          aria-owns={anchorEl ? "We offer" : undefined}
+          aria-haspopup={anchorEl ? "true" : undefined}
+          label='Offered'
+          to='/Offered'
+          component={Link}
+          onMouseOver={(event) => handleClick(event)}
+          icon={<FavoriteIcon />}
+          {...a11yProps(1)}
+        />
+        <Tab
+          label='About'
+          to='/About'
+          component={Link}
+          icon={<PersonPinIcon />}
+          {...a11yProps(2)}
+        />
+        <Tab
+          label='Contact'
+          to='/Contact'
+          component={Link}
+          icon={<HelpIcon />}
+          {...a11yProps(3)}
+        />
+        {/* <Tab
                 label='Item Five'
                 component={Link}
                 to='/Robotics'
@@ -272,35 +266,35 @@ export default function Header(props) {
                 icon={<ThumbUp />}
                 {...a11yProps(6)}
               /> */}
-            </Tabs>
-          </Toolbar>
-          <Menu
-            id='simple-menu'
-            anchorEl={anchorEl}
-            keepMounted
-            open={open}
-            onClose={handleClose}
-            classes={{ paper: classes.menu }}
-            MenuListProps={{ onMouseLeave: handleClose }}
-            elevation={0}
+      </Tabs>
+
+      <Menu
+        id='simple-menu'
+        anchorEl={anchorEl}
+        keepMounted
+        open={open}
+        onClose={handleClose}
+        classes={{ paper: classes.menu }}
+        MenuListProps={{ onMouseLeave: handleClose }}
+        elevation={0}
+      >
+        {manuOptions.map((option, i) => (
+          <MenuItem
+            key={option}
+            component={Link}
+            to={option.Link}
+            classes={{ root: classes.menuItem }}
+            onClick={(event) => {
+              handleMenuItemClick(event, i);
+              setValue(1);
+              handleClose();
+            }}
+            selected={i === selectedIndex && value === 1}
           >
-            {manuOptions.map((option, i) => (
-              <MenuItem
-                key={option}
-                component={Link}
-                to={option.Link}
-                classes={{ root: classes.menuItem }}
-                onClick={(event) => {
-                  handleMenuItemClick(event, i);
-                  setValue(1);
-                  handleClose();
-                }}
-                selected={i === selectedIndex && value === 1}
-              >
-                {option.name}
-              </MenuItem>
-            ))}
-            {/* <MenuItem onClick={() => {handleClose(); setValue(1)}}  component={Link}
+            {option.name}
+          </MenuItem>
+        ))}
+        {/* <MenuItem onClick={() => {handleClose(); setValue(1)}}  component={Link}
                 to='/Offered' classes={{root: classes.menuItem}}>Offered</MenuItem>
             <MenuItem onClick={() => {handleClose(); setValue(1)}}  component={Link}
                 to='/Robotics' classes={{root: classes.menuItem}}>Robotics</MenuItem>
@@ -308,7 +302,26 @@ export default function Header(props) {
                 to='/AppMaking' classes={{root: classes.menuItem}}>AppMaking</MenuItem>
             <MenuItem onClick={() => {handleClose(); setValue(1)}}  component={Link}
                 to='/Baking' classes={{root: classes.menuItem}}>Baking</MenuItem> */}
-          </Menu>
+      </Menu>
+    </React.Fragment>
+  );
+
+  return (
+    <React.Fragment>
+      <ElevationScroll>
+        <AppBar position='fixed' color='secondary'>
+          <Toolbar disableGutters={false}>
+            <Button
+              disableRipple
+              className={classes.logoContainer}
+              component={Link}
+              to='/'
+              onClick={() => setValue(0)}
+            >
+              <img src={logo} alt='logo' className={classes.logo}></img>
+            </Button>
+            {matches ? null : tabs}
+          </Toolbar>
         </AppBar>
       </ElevationScroll>
       <div className={classes.toobarMargin} />
