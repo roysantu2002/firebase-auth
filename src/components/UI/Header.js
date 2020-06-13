@@ -1,23 +1,25 @@
-import React, { useState, useEffect } from "react";
-import PropTypes from "prop-types";
-import AppBar from "@material-ui/core/AppBar";
-import Toolbar from "@material-ui/core/Toolbar";
-import Tabs from "@material-ui/core/Tabs";
-import Tab from "@material-ui/core/Tab";
-import PhoneIcon from "@material-ui/icons/Phone";
-import FavoriteIcon from "@material-ui/icons/Favorite";
-import PersonPinIcon from "@material-ui/icons/PersonPin";
-import HelpIcon from "@material-ui/icons/Help";
-import ShoppingBasket from "@material-ui/icons/ShoppingBasket";
-import ThumbDown from "@material-ui/icons/ThumbDown";
+import React, { useState, useEffect } from "react"
+import PropTypes from "prop-types"
+import AppBar from "@material-ui/core/AppBar"
+import Toolbar from "@material-ui/core/Toolbar"
+import Tabs from "@material-ui/core/Tabs"
+import Tab from "@material-ui/core/Tab"
+import PhoneIcon from "@material-ui/icons/Phone"
+import FavoriteIcon from "@material-ui/icons/Favorite"
+import PersonPinIcon from "@material-ui/icons/PersonPin"
+import HelpIcon from "@material-ui/icons/Help"
+import ShoppingBasket from "@material-ui/icons/ShoppingBasket"
+import ThumbDown from "@material-ui/icons/ThumbDown"
 import ThumbUp from "@material-ui/icons/ThumbUp";
-import useScrollTrigger from "@material-ui/core/useScrollTrigger";
-import Box from "@material-ui/core/Box";
-import { makeStyles } from "@material-ui/core/styles";
-import Typography from "@material-ui/core/Typography";
-import logo from "../../assets/SF.png";
-import { Link } from "react-router-dom";
-import Button from "@material-ui/core/Button";
+import useScrollTrigger from "@material-ui/core/useScrollTrigger"
+import Box from "@material-ui/core/Box"
+import { makeStyles } from "@material-ui/core/styles"
+import Typography from "@material-ui/core/Typography"
+import logo from "../../assets/SF.png"
+import { Link } from "react-router-dom"
+import Button from "@material-ui/core/Button"
+import Menu from "@material-ui/core/Menu"
+import MenuItem from "@material-ui/core/MenuItem"
 
 //Header elevator
 function ElevationScroll(props) {
@@ -81,7 +83,6 @@ const useStyles = makeStyles((theme) => ({
     "&:hover": {
       backgroundColor: "transparent"
     }
-
   },
   tabContainer: {
     marginLeft: "auto",
@@ -101,10 +102,23 @@ const useStyles = makeStyles((theme) => ({
 // });
 
 export default function Header(props) {
-  const classes = useStyles();
-  const [value, setValue] = useState(0);
+  const classes = useStyles()
+  const [value, setValue] = useState(0)
+  const [anchorEl, setAnchorEl] = useState(null)
+  const [open, setOpen] = useState(false)
+
   const handleChange = (event, newValue) => {
     setValue(newValue);
+  };
+
+  const handleClick = (event) => {
+    setAnchorEl(event.currentTarget);
+    setOpen(true)
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null)
+    setOpen(false)
   };
 
   useEffect(() => {
@@ -122,7 +136,7 @@ export default function Header(props) {
       <ElevationScroll>
         <AppBar position='fixed' color='secondary'>
           <Toolbar disableGutters={false}>
-            <Button className={classes.logoContainer} component={Link} to='/' onClick={() => setValue(0)}>
+            <Button disableRipple className={classes.logoContainer} component={Link} to='/' onClick={() => setValue(0)}>
               <img src={logo} alt='logo' className={classes.logo}></img>
             </Button>
 
@@ -137,16 +151,19 @@ export default function Header(props) {
               aria-label='scrollable force tabs example'
             >
               <Tab
-                label='Item One'
+                label='Home'
                 component={Link}
                 to='/'
                 icon={<PhoneIcon />}
                 {...a11yProps(0)}
               />
               <Tab
-                label='Item Two'
+              aria-owns={anchorEl ? "We offer" : undefined}
+              aria-haspopup={anchorEl ? "true" : undefined}
+                label='Offered'
                 to='/Coding'
                 component={Link}
+                onClick={(event) => handleClick}
                 icon={<FavoriteIcon />}
                 {...a11yProps(1)}
               />
