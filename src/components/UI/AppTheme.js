@@ -16,12 +16,11 @@ export default createMuiTheme({
     },
   },
   typography: {
-    h3: {
-      fontFamily: "Roboto",
-      fontWeight: 300,
-      fontSize: "6rem",
-      lineHeight: 1.167,
-      letterSpacing: "-0.01562em",
-    },
+    tab:{
+        fontFamily: "",
+        textTransform: "none",
+        fontWeight: 700,
+        fontSize: "1rem",
+    }
   },
 });

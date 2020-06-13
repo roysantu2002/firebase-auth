@@ -1,5 +1,5 @@
-import React from "react";
-import PropTypes from 'prop-types';
+import React, { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import AppBar from "@material-ui/core/AppBar";
 import Toolbar from "@material-ui/core/Toolbar";
 import Tabs from "@material-ui/core/Tabs";
@@ -16,6 +16,8 @@ import Box from "@material-ui/core/Box";
 import { makeStyles } from "@material-ui/core/styles";
 import Typography from "@material-ui/core/Typography";
 import logo from "../../assets/SF.png";
+import { Link } from "react-router-dom";
+import Button from "@material-ui/core/Button";
 
 //Header elevator
 function ElevationScroll(props) {
@@ -74,16 +76,20 @@ const useStyles = makeStyles((theme) => ({
     height: "4em",
     padding: "0.5em",
   },
+  logoContainer:{
+    padding: 0,
+    "&:hover": {
+      backgroundColor: "transparent"
+    }
+
+  },
   tabContainer: {
     marginLeft: "auto",
   },
   tab: {
-    fontFamily: "",
-    textTransform: "none",
-    fontWeight: 700,
-    fontSize: "1rem",
+    ...theme.typography.tab,
     minWidth: 10,
-    marginLeft: "25",
+    marginLeft: "10",
   },
 }));
 
@@ -96,17 +102,32 @@ const useStyles = makeStyles((theme) => ({
 
 export default function Header(props) {
   const classes = useStyles();
-  const [value, setValue] = React.useState(0);
+  const [value, setValue] = useState(0);
   const handleChange = (event, newValue) => {
     setValue(newValue);
   };
+
+  useEffect(() => {
+    if (window.location.pathname === "/" && value !== 0) {
+      setValue(0);
+    } else if (window.location.pathname === "/Coding" && value !== 1) {
+      setValue(1);
+    } else if (window.location.pathname === "/Writing" && value !== 2) {
+      setValue(2);
+    }
+  }, [value]);
+
   return (
     <React.Fragment>
       <ElevationScroll>
-        <AppBar position='fixed' color='primary'>
+        <AppBar position='fixed' color='secondary'>
           <Toolbar disableGutters={false}>
-            <img src={logo} alt='logo' className={classes.logo}></img>
+            <Button className={classes.logoContainer} component={Link} to='/' onClick={() => setValue(0)}>
+              <img src={logo} alt='logo' className={classes.logo}></img>
+            </Button>
+
             <Tabs
+              color='primary'
               value={value}
               onChange={handleChange}
               variant='scrollable'
@@ -116,44 +137,51 @@ export default function Header(props) {
               aria-label='scrollable force tabs example'
             >
               <Tab
-                
                 label='Item One'
+                component={Link}
+                to='/'
                 icon={<PhoneIcon />}
                 {...a11yProps(0)}
               />
               <Tab
-              
                 label='Item Two'
+                to='/Coding'
+                component={Link}
                 icon={<FavoriteIcon />}
                 {...a11yProps(1)}
               />
               <Tab
-              
                 label='Item Three'
+                to='/Writing'
+                component={Link}
                 icon={<PersonPinIcon />}
                 {...a11yProps(2)}
               />
               <Tab
-              
                 label='Item Four'
+                to='/Filmmaking'
+                component={Link}
                 icon={<HelpIcon />}
                 {...a11yProps(3)}
               />
               <Tab
-              
                 label='Item Five'
+                to='/Robotics'
+                component={Link}
                 icon={<ShoppingBasket />}
                 {...a11yProps(4)}
               />
               <Tab
-               
                 label='Item Six'
+                to='/AppMaking'
+                component={Link}
                 icon={<ThumbDown />}
                 {...a11yProps(5)}
               />
               <Tab
-                
                 label='Item Seven'
+                to='/Baking'
+                component={Link}
                 icon={<ThumbUp />}
                 {...a11yProps(6)}
               />
