@@ -136,6 +136,13 @@ const useStyles = makeStyles((theme) => ({
     height: "30px",
     width: "30px",
   },
+  drawer: {
+    backgroundColor: theme.palette.common.blue,
+  },
+  drawerItem: {
+    ...theme.typography.tab,
+    color: "white",
+  },
 }));
 
 // const imgStyle = makeStyles({
@@ -343,18 +350,49 @@ export default function Header(props) {
         open={openDrawer}
         onClose={() => setOpenDrawer(false)}
         onOpen={() => setOpenDrawer(true)}
+        classes={{ paper: classes.drawer }}
       >
         <List disablePadding>
-          <ListItem onClick={() => setOpenDrawer(false)} divider button component={Link} to='/'>
-            <ListItemText disableTypography>Home</ListItemText>
+          <ListItem
+            onClick={() => {setOpenDrawer(false); setValue(0) }}
+            divider
+            button
+            component={Link}
+            to='/'
+            selected={value === 0}
+          >
+            <ListItemText className={classes.drawerItem} disableTypography>
+              Home
+            </ListItemText>
           </ListItem>
-          <ListItem  onClick={() => setOpenDrawer(false)} divider button component={Link} to='/Offered'>
+          <ListItem
+             onClick={() => {setOpenDrawer(false); setValue(1) }}
+            divider
+            button
+            component={Link}
+            to='/Offered'
+            selected={value === 1}
+          >
             <ListItemText disableTypography>Offered</ListItemText>
           </ListItem>
-          <ListItem  onClick={() => setOpenDrawer(false)} divider button component={Link} to='/About'>
+          <ListItem
+           onClick={() => {setOpenDrawer(false); setValue(2) }}
+            divider
+            button
+            component={Link}
+            to='/About'
+            selected={value === 2}
+          >
             <ListItemText disableTypography>About</ListItemText>
           </ListItem>
-          <ListItem  onClick={() => setOpenDrawer(false)} divider button component={Link} to='/Contact'>
+          <ListItem
+            onClick={() => {setOpenDrawer(false); setValue(3) }}
+            divider
+            button
+            component={Link}
+            to='/Contact'
+            selected={value === 3}
+          >
             <ListItemText disableTypography>Contact</ListItemText>
           </ListItem>
         </List>
