@@ -23,9 +23,13 @@ import MenuItem from "@material-ui/core/MenuItem";
 import useMediaQuery from "@material-ui/core/useMediaQuery";
 import { useTheme } from "@material-ui/core/styles";
 import SwipeableDrawer from "@material-ui/core/SwipeableDrawer";
-import MenuIcon from '@material-ui/icons/Menu';
-import IconButton from '@material-ui/core/IconButton';
+import MenuIcon from "@material-ui/icons/Menu";
+import IconButton from "@material-ui/core/IconButton";
 import { TextareaAutosize } from "@material-ui/core";
+import List from "@material-ui/core/List";
+import ListItem from "@material-ui/core/ListItem";
+import ListItemIcon from "@material-ui/core/ListItemIcon";
+import ListItemText from "@material-ui/core/ListItemText";
 
 //Header elevator
 function ElevationScroll(props) {
@@ -122,16 +126,16 @@ const useStyles = makeStyles((theme) => ({
       opacity: 1,
     },
   },
-  drawerIconContainer:{
-    marginLeft:"auto",
+  drawerIconContainer: {
+    marginLeft: "auto",
     "&:hover": {
       backgroundColor: "transparent",
     },
   },
-  drawerIcon:{
+  drawerIcon: {
     height: "30px",
-    width: "30px"
-  }
+    width: "30px",
+  },
 }));
 
 // const imgStyle = makeStyles({
@@ -340,10 +344,28 @@ export default function Header(props) {
         onClose={() => setOpenDrawer(false)}
         onOpen={() => setOpenDrawer(true)}
       >
-        First Drawer
+        <List disablePadding>
+          <ListItem onClick={() => setOpenDrawer(false)} divider button component={Link} to='/'>
+            <ListItemText disableTypography>Home</ListItemText>
+          </ListItem>
+          <ListItem  onClick={() => setOpenDrawer(false)} divider button component={Link} to='/Offered'>
+            <ListItemText disableTypography>Offered</ListItemText>
+          </ListItem>
+          <ListItem  onClick={() => setOpenDrawer(false)} divider button component={Link} to='/About'>
+            <ListItemText disableTypography>About</ListItemText>
+          </ListItem>
+          <ListItem  onClick={() => setOpenDrawer(false)} divider button component={Link} to='/Contact'>
+            <ListItemText disableTypography>Contact</ListItemText>
+          </ListItem>
+        </List>
       </SwipeableDrawer>
-      <IconButton className={classes.drawerIconContainer} color='secondary' onClick={() => setOpenDrawer(!openDrawer)} disableRipple>
-        <MenuIcon className={classes.drawerIcon}/>
+      <IconButton
+        className={classes.drawerIconContainer}
+        color='secondary'
+        onClick={() => setOpenDrawer(!openDrawer)}
+        disableRipple
+      >
+        <MenuIcon className={classes.drawerIcon} />
       </IconButton>
     </React.Fragment>
   );
@@ -351,7 +373,7 @@ export default function Header(props) {
   return (
     <React.Fragment>
       <ElevationScroll>
-        <AppBar position='fixed' >
+        <AppBar position='fixed'>
           <Toolbar disableGutters={false}>
             <Button
               disableRipple
