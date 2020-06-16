@@ -145,7 +145,9 @@ const useStyles = makeStyles((theme) => ({
     opacity: 0.7,
   },
   drawerItemSelected: {
-    opacity: 1,
+    "& .MuiListItemText-root": {
+      opacity: 1,
+    }
   },
   appbar: {
     zIndex: theme.zIndex.modal +1 
@@ -321,16 +323,17 @@ export default function Header(props) {
       <Menu
         id='simple-menu'
         anchorEl={anchorEl}
-        keepMounted
         open={openMenu}
         onClose={handleClose}
         classes={{ paper: classes.menu }}
         MenuListProps={{ onMouseLeave: handleClose }}
         elevation={0}
+        keepMounted
+        style={{zIndex: 1302}}
       >
         {manuOptions.map((option, i) => (
           <MenuItem
-            key={option}
+            key={`${option}${i}`}
             component={Link}
             to={option.Link}
             classes={{ root: classes.menuItem }}
@@ -378,13 +381,10 @@ export default function Header(props) {
             component={Link}
             to='/'
             selected={value === 0}
+            classes={{selecte: classes.drawerItemSelected}}
           >
             <ListItemText
-              className={
-                value === 0
-                  ? [classes.drawerItem, classes.drawerItemSelected]
-                  : classes.drawerItemSelected
-              }
+              className={classes.drawerItem}
               disableTypography
             >
               Home
