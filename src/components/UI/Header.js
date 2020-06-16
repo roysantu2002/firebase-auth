@@ -147,6 +147,9 @@ const useStyles = makeStyles((theme) => ({
   drawerItemSelected: {
     opacity: 1,
   },
+  appbar: {
+    zIndex: theme.zIndex.modal +1 
+  }
 }));
 
 // const imgStyle = makeStyles({
@@ -188,20 +191,20 @@ export default function Header(props) {
   };
 
   const manuOptions = [
-    { name: "Offered", Link: "/Offered", activeIndex: 1, selectedIndex: 0 },
-    { name: "Writing", Link: "Writing", activeIndex: 1, selectedIndex: 1 },
-    { name: "Robotics", Link: "Robotics", activeIndex: 1, selectedIndex: 3 },
+    { name: "Offered", link: "/Offered", activeIndex: 1, selectedIndex: 0 },
+    { name: "Writing", link: "Writing", activeIndex: 1, selectedIndex: 1 },
+    { name: "Robotics",link: "Robotics", activeIndex: 1, selectedIndex: 3 },
   ];
 
   const routes = [
     {
       name: "Home",
-      Link: "/",
+      link: "/",
       activeIndex: 0,
     },
     {
       name: "Offered",
-      Link: "/Offered",
+      link: "/Offered",
       activeIndex: 1,
       ariaowns: anchorEl ? "We offer" : undefined,
       ariahaspopup: anchorEl ? "true" : undefined,
@@ -210,12 +213,12 @@ export default function Header(props) {
     },
     {
       name: "About",
-      Link: "/About",
+      link: "/About",
       activeIndex: 2,
     },
     {
       name: "Contact",
-      Link: "/Contact",
+      link: "/Contact",
       activeIndex: 3,
     },
   ];
@@ -250,6 +253,7 @@ export default function Header(props) {
       >
         {routes.map((route, index) => (
           <Tab
+            key={`${route}${index}`}
             component={Link}
             to={route.link}
             label={route.name}
@@ -257,6 +261,7 @@ export default function Header(props) {
             aria-haspopup={route.ariahaspopup}
             icon={route.icon}
             onMouseOver={route.onMouseOver}
+            {...a11yProps(route.index)}
           />
         ))}
         {/* <Tab
@@ -361,6 +366,7 @@ export default function Header(props) {
         onOpen={() => setOpenDrawer(true)}
         classes={{ paper: classes.drawer }}
       >
+        <div className={classes.toobarMargin}/>
         <List disablePadding>
           <ListItem
             onClick={() => {
@@ -452,6 +458,7 @@ export default function Header(props) {
           </ListItem>
         </List>
       </SwipeableDrawer>
+
       <IconButton
         className={classes.drawerIconContainer}
         color='secondary'
@@ -466,7 +473,7 @@ export default function Header(props) {
   return (
     <React.Fragment>
       <ElevationScroll>
-        <AppBar position='fixed'>
+        <AppBar position='fixed' className={classes.appbar}>
           <Toolbar disableGutters={false}>
             <Button
               disableRipple
