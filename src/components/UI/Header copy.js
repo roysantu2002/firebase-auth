@@ -188,53 +188,81 @@ export default function Header(props) {
   };
 
   const manuOptions = [
-    { name: "Offered", Link: "/Offered", activeIndex: 1, selectedIndex: 0 },
-    { name: "Writing", Link: "Writing", activeIndex: 1, selectedIndex: 1 },
-    { name: "Robotics", Link: "Robotics", activeIndex: 1, selectedIndex: 3 },
+    { name: "Offered", Link: "/Offered" },
+    { name: "Writing", Link: "Writing" },
+    { name: "Robotics", Link: "Robotics" },
   ];
 
   const routes = [
-    {
-      name: "Home",
-      Link: "/",
-      activeIndex: 0,
-    },
-    {
-      name: "Offered",
-      Link: "/Offered",
-      activeIndex: 1,
-      ariaowns: anchorEl ? "We offer" : undefined,
-      ariahaspopup: anchorEl ? "true" : undefined,
-      icon: <PhoneIcon />,
-      onMouseOver: (event) => handleClick(event),
-    },
-    {
-      name: "About",
-      Link: "/About",
-      activeIndex: 2,
-    },
-    {
-      name: "Contact",
-      Link: "/Contact",
-      activeIndex: 3,
-    },
+    { name: "Home", Link: "/" },
+    { name: "Offered", Link: "/Offered" },
+    { name: "About", Link: "/About"},
+    { name: "Contact", "Link": "/Contact"}
   ];
   useEffect(() => {
-    [...manuOptions, ...routes].forEach((route) => {
-      switch (window.location.pathname) {
+
+    [...menuOptions, ...routes].forEach(route) => {
+      switch(window.location.pathname){
         case `${route.link}`:
-          if (value !== route.activeIndex) {
-            setValue(route.activeIndex);
-            if (route.selectedIndex && route.selectedIndex !== selectedIndex) {
-              setSelectedIndex(route.selectedIndex);
+          if(value !== route.activeIndex){
+            setValue(route.activeIndex)
+            if(route.selectedIndex && route.selectedIndex !== selectedIndex){
+              setSelectedIndex(route.selectedIndex)
             }
           }
           break;
         default:
           break;
       }
-    });
-  }, [value, manuOptions, selectedIndex, routes]);
+    }
+    // if (window.location.pathname === "/" && value !== 0) {
+    //   setValue(0);
+    // } else if (window.location.pathname === "/Coding" && value !== 1) {
+    //   setValue(1);
+    // } else if (window.location.pathname === "/Writing" && value !== 2) {
+    //   setValue(2);
+    // }
+
+    switch (window.location.pathname) {
+      case "/":
+        if (value !== 0) {
+          setValue(0);
+        }
+        break;
+      case "/Offered":
+        if (value !== 1) {
+          setValue(1);
+          setSelectedIndex(0);
+        }
+        break;
+      case "/Writing":
+        if (value !== 1) {
+          setValue(1);
+          setSelectedIndex(1);
+        }
+        break;
+      case "/Robotics":
+        if (value !== 1) {
+          setValue(1);
+          setSelectedIndex(2);
+        }
+        break;
+      case "/About":
+        if (value !== 2) {
+          setValue(2);
+          // setSelectedIndex(1)
+        }
+        break;
+      case "/Contact":
+        if (value !== 3) {
+          setValue(3);
+          // setSelectedIndex(2)
+        }
+        break;
+      default:
+        break;
+    }
+  }, [value]);
 
   const tabs = (
     <React.Fragment>
@@ -248,18 +276,7 @@ export default function Header(props) {
         textColor='primary'
         aria-label='scrollable force tabs example'
       >
-        {routes.map((route, index) => (
-          <Tab
-            component={Link}
-            to={route.link}
-            label={route.name}
-            aria-owns={route.ariaowns}
-            aria-haspopup={route.ariahaspopup}
-            icon={route.icon}
-            onMouseOver={route.onMouseOver}
-          />
-        ))}
-        {/* <Tab
+        <Tab
           label='Home'
           component={Link}
           to='/'
@@ -289,7 +306,7 @@ export default function Header(props) {
           component={Link}
           icon={<HelpIcon />}
           {...a11yProps(3)}
-        /> */}
+        />
         {/* <Tab
                 label='Item Five'
                 component={Link}
