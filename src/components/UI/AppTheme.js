@@ -1,7 +1,8 @@
 import { createMuiTheme } from "@material-ui/core/styles";
 
-const lightBlue = "#7395AE";
-const darkGery = "#5D5C61";
+const lightBlue = "#fafafa"
+//const lightBlue = "#bdbdbd";
+const darkGery = "#00000f";
 export default createMuiTheme({
   palette: {
     common: {

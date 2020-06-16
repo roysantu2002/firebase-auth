@@ -15,7 +15,7 @@ import useScrollTrigger from "@material-ui/core/useScrollTrigger";
 import Box from "@material-ui/core/Box";
 import { makeStyles } from "@material-ui/core/styles";
 import Typography from "@material-ui/core/Typography";
-import logo from "../../assets/SF.png";
+import logo from "../../assets/asap.svg";
 import { Link } from "react-router-dom";
 import Button from "@material-ui/core/Button";
 import Menu from "@material-ui/core/Menu";
@@ -84,19 +84,19 @@ const useStyles = makeStyles((theme) => ({
     ...theme.mixins.toolbar,
     marginBottom: "3em",
     [theme.breakpoints.down("md")]: {
-      marginBottom: "2em",
+      marginBottom: "1em",
     },
     [theme.breakpoints.down("xs")]: {
       marginBottom: "1.25em",
     },
   },
   logo: {
-    height: "4em",
+    height: "5.5em",
     [theme.breakpoints.down("md")]: {
-      height: "3em",
+      height: "4em",
     },
     [theme.breakpoints.down("xs")]: {
-      height: "1em",
+      height: "3em",
     },
     padding: "0.5em",
   },
@@ -141,7 +141,7 @@ const useStyles = makeStyles((theme) => ({
   },
   drawerItem: {
     ...theme.typography.tab,
-    color: "white",
+    color: theme.palette.common.grey,
     opacity: 0.7,
   },
   drawerItemSelected: {
@@ -244,13 +244,13 @@ export default function Header(props) {
   const tabs = (
     <React.Fragment>
       <Tabs
-        color='primary'
+        color='secondary'
         value={value}
         onChange={handleChange}
         variant='scrollable'
         scrollButtons='on'
-        indicatorColor='primary'
-        textColor='primary'
+        indicatorColor='secondary'
+        textColor='secondary'
         aria-label='scrollable force tabs example'
       >
         {routes.map((route, index) => (
