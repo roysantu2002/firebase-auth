@@ -1,8 +1,10 @@
 import React from "react";
+import "./UI/App.css";
 import { BrowserRouter, Route, Switch } from "react-router-dom";
 import { ThemeProvider } from "@material-ui/styles";
 import Signup from "./UI/Auth/Signup";
 import Header from "./UI/Header";
+import Footer from "./UI/Footer";
 import theme from "./UI/AppTheme";
 
 function App() {
@@ -10,6 +12,7 @@ function App() {
     <ThemeProvider theme={theme}>
       <BrowserRouter>
         <Header/>
+     
         <Switch>
           <Route exact path="/"  component={() => <div>Home</div>}></Route>
           <Route exact path="/Offered"  component={() => <div>Offered</div>}></Route>
@@ -21,7 +24,7 @@ function App() {
           <Route exact path="/About"  component={() => <div>About</div>}></Route>
           <Route exact path="/Contact"  component={() => <div>Contact</div>}></Route>
         </Switch>
-        <Signup />
+        <Footer/>
       </BrowserRouter>
     </ThemeProvider>
   );
