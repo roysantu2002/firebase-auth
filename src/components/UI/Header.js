@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import PropTypes from "prop-types";
 import AppBar from "@material-ui/core/AppBar";
 import Toolbar from "@material-ui/core/Toolbar";
@@ -16,7 +17,6 @@ import Box from "@material-ui/core/Box";
 import { makeStyles } from "@material-ui/core/styles";
 import Typography from "@material-ui/core/Typography";
 import logo from "../../assets/asap.svg";
-import { Link } from "react-router-dom";
 import Button from "@material-ui/core/Button";
 import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
@@ -167,13 +167,13 @@ export default function Header(props) {
   const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
   const [openDrawer, setOpenDrawer] = useState(false);
   const matches = useMediaQuery(theme.breakpoints.down("md"));
-  const [value, setValue] = useState(0);
+
   const [anchorEl, setAnchorEl] = useState(null);
   const [openMenu, setOpenMenu] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState(0);
+
 
   const handleChange = (event, newValue) => {
-    setValue(newValue);
+    props.setValue(newValue);
   };
 
   const handleClick = (event) => {
@@ -189,7 +189,7 @@ export default function Header(props) {
   const handleMenuItemClick = (event, i) => {
     setAnchorEl(null);
     setOpenMenu(false);
-    setSelectedIndex(i);
+    props.setSelectedIndex(i);
   };
 
   const manuOptions = [
@@ -228,10 +228,10 @@ export default function Header(props) {
     [...manuOptions, ...routes].forEach((route) => {
       switch (window.location.pathname) {
         case `${route.link}`:
-          if (value !== route.activeIndex) {
-            setValue(route.activeIndex);
-            if (route.selectedIndex && route.selectedIndex !== selectedIndex) {
-              setSelectedIndex(route.selectedIndex);
+          if (props.value !== route.activeIndex) {
+            props.props.setValue(route.activeIndex);
+            if (route.selectedIndex && route.selectedIndex !== props.selectedIndex) {
+              props.setSelectedIndex(route.selectedIndex);
             }
           }
           break;
@@ -239,13 +239,13 @@ export default function Header(props) {
           break;
       }
     });
-  }, [value, manuOptions, selectedIndex, routes]);
+  }, [props.value, manuOptions, props.selectedIndex, routes, props]);
 
   const tabs = (
     <React.Fragment>
       <Tabs
         color='secondary'
-        value={value}
+        value={props.value}
         onChange={handleChange}
         variant='scrollable'
         scrollButtons='on'
@@ -339,21 +339,21 @@ export default function Header(props) {
             classes={{ root: classes.menuItem }}
             onClick={(event) => {
               handleMenuItemClick(event, i);
-              setValue(1);
+              props.setValue(1);
               handleClose();
             }}
-            selected={i === selectedIndex && value === 1}
+            selected={i === props.selectedIndex && props.value === 1}
           >
             {option.name}
           </MenuItem>
         ))}
-        {/* <MenuItem onClick={() => {handleClose(); setValue(1)}}  component={Link}
+        {/* <MenuItem onClick={() => {handleClose(); props.props.setValue(1)}}  component={Link}
                 to='/Offered' classes={{root: classes.menuItem}}>Offered</MenuItem>
-            <MenuItem onClick={() => {handleClose(); setValue(1)}}  component={Link}
+            <MenuItem onClick={() => {handleClose(); props.props.setValue(1)}}  component={Link}
                 to='/Robotics' classes={{root: classes.menuItem}}>Robotics</MenuItem>
-            <MenuItem onClick={() => {handleClose(); setValue(1)}}  component={Link}
+            <MenuItem onClick={() => {handleClose(); props.props.setValue(1)}}  component={Link}
                 to='/AppMaking' classes={{root: classes.menuItem}}>AppMaking</MenuItem>
-            <MenuItem onClick={() => {handleClose(); setValue(1)}}  component={Link}
+            <MenuItem onClick={() => {handleClose(); props.props.setValue(1)}}  component={Link}
                 to='/Baking' classes={{root: classes.menuItem}}>Baking</MenuItem> */}
       </Menu>
     </React.Fragment>
@@ -374,13 +374,13 @@ export default function Header(props) {
           <ListItem
             onClick={() => {
               setOpenDrawer(false);
-              setValue(0);
+              props.setValue(0);
             }}
             divider
             button
             component={Link}
             to='/'
-            selected={value === 0}
+            selected={props.value === 0}
             classes={{selecte: classes.drawerItemSelected}}
           >
             <ListItemText
@@ -393,17 +393,17 @@ export default function Header(props) {
           <ListItem
             onClick={() => {
               setOpenDrawer(false);
-              setValue(1);
+              props.setValue(1);
             }}
             divider
             button
             component={Link}
             to='/Offered'
-            selected={value === 1}
+            selected={props.value === 1}
           >
             <ListItemText
               className={
-                value === 1
+                props.value === 1
                   ? [classes.drawerItem, classes.drawerItemSelected]
                   : classes.drawerItemSelected
               }
@@ -415,17 +415,17 @@ export default function Header(props) {
           <ListItem
             onClick={() => {
               setOpenDrawer(false);
-              setValue(2);
+              props.setValue(2);
             }}
             divider
             button
             component={Link}
             to='/About'
-            selected={value === 2}
+            selected={props.value === 2}
           >
             <ListItemText
               className={
-                value === 2
+                props.value === 2
                   ? [classes.drawerItem, classes.drawerItemSelected]
                   : classes.drawerItemSelected
               }
@@ -437,17 +437,17 @@ export default function Header(props) {
           <ListItem
             onClick={() => {
               setOpenDrawer(false);
-              setValue(3);
+              props.setValue(3);
             }}
             divider
             button
             component={Link}
             to='/Contact'
-            selected={value === 3}
+            selected={props.value === 3}
           >
             <ListItemText
               className={
-                value === 3
+                props.value === 3
                   ? [classes.drawerItem, classes.drawerItemSelected]
                   : classes.drawerItemSelected
               }
@@ -480,7 +480,7 @@ export default function Header(props) {
               className={classes.logoContainer}
               component={Link}
               to='/'
-              onClick={() => setValue(0)}
+              onClick={() => props.setValue(0)}
             >
               <img src={logo} alt='logo' className={classes.logo}></img>
             </Button>
