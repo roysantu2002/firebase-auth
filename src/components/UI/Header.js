@@ -110,9 +110,8 @@ const useStyles = makeStyles((theme) => ({
     marginLeft: "auto",
   },
   tab: {
+    
     ...theme.typography.tab,
-    minWidth: 10,
-    marginLeft: "100",
   },
   menu: {
     backgroundColor: theme.palette.common.grey,
@@ -229,7 +228,7 @@ export default function Header(props) {
       switch (window.location.pathname) {
         case `${route.link}`:
           if (props.value !== route.activeIndex) {
-            props.props.setValue(route.activeIndex);
+            props.setValue(route.activeIndex);
             if (route.selectedIndex && route.selectedIndex !== props.selectedIndex) {
               props.setSelectedIndex(route.selectedIndex);
             }
@@ -244,6 +243,7 @@ export default function Header(props) {
   const tabs = (
     <React.Fragment>
       <Tabs
+      className={classes.tabContainer}
         color='secondary'
         value={props.value}
         onChange={handleChange}
@@ -255,6 +255,7 @@ export default function Header(props) {
       >
         {routes.map((route, index) => (
           <Tab
+            className={classes.tab}
             key={`${route}${index}`}
             component={Link}
             to={route.link}
@@ -474,6 +475,7 @@ export default function Header(props) {
     <React.Fragment>
       <ElevationScroll>
         <AppBar position='fixed' className={classes.appbar}>
+    
           <Toolbar disableGutters={false}>
             <Button
               disableRipple

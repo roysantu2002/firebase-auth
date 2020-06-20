@@ -17,11 +17,15 @@ export default createMuiTheme({
     },
   },
   typography: {
+
     tab:{
-        fontFamily: "",
-        textTransform: "none",
-        fontWeight: 700,
-        fontSize: "1rem",
+      fontFamily: 'Cabin',
+      textTransform: "none",
+      fontWeight: 700,
+      fontSize: "1rem",
+      minwidth: 10,
+      marginLeft: "25px"
     }
+
   },
 });

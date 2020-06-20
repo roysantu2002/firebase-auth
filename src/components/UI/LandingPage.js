@@ -3,6 +3,7 @@ import Lottie from "react-lottie"
 import { makeStyles } from "@material-ui/core/styles";
 import animationData from "../../animation/Onlinework.json"
 import Grid from "@material-ui/core/Grid"
+import Button from '@material-ui/core/Button';
 
 const useStyles = makeStyles((theme) => ({}));
 
@@ -21,9 +22,14 @@ export default function LandingPage() {
 
     <Grid container direction="column">
       <Grid item>
-        <Grid container direction="row">
+        <Grid container justify="flex-end" alignItem="center" direction="row">
           <Grid item>
             <div> Shape your dream</div>
+            <Grid container>
+              <grid item>
+                <Button variant="contained"> Join Our Community</Button>
+              </grid>
+            </Grid>
           </Grid>
           <Grid item>
           <Lottie options={defaultOptions} height={"100%"} width={"100%"} /> 
