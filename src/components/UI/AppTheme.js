@@ -3,13 +3,17 @@ import { createMuiTheme } from "@material-ui/core/styles";
 const red = "#ff3422"
 const gold = "#835A00"
 //const lightBlue = "#bdbdbd";
-const darkBlue = "#628078";
+const darkBlue = "#628078"
+
+const appleGrey = "#999999"
+
 export default createMuiTheme({
   palette: {
     common: {
       darkRed: `${red}`,
       darkGold: `${gold}`,
-      darkBlue: `${darkBlue}`
+      darkBlue: `${darkBlue}`,
+      appleGrey: `${appleGrey}`
     },
     primary: {
       main: `${red}`,
@@ -19,7 +23,8 @@ export default createMuiTheme({
     },
     darkBlue:{
       main: `${darkBlue}`
-    }
+    },
+    appleGrey: `${appleGrey}`
   },
   typography: {
 

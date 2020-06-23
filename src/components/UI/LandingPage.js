@@ -5,7 +5,13 @@ import animationData from "../../animation/Onlinework.json"
 import Grid from "@material-ui/core/Grid"
 import Button from '@material-ui/core/Button';
 
-const useStyles = makeStyles((theme) => ({}));
+const useStyles = makeStyles((theme) => ({
+
+  body: {
+    backgroundColor: theme.palette.common.appleGrey,
+  }
+
+}));
 
 export default function LandingPage() {
   const classes = useStyles();
@@ -32,7 +38,7 @@ export default function LandingPage() {
             </Grid>
           </Grid>
           <Grid item>
-          <Lottie options={defaultOptions} height={"100%"} width={"100%"} /> 
+          <Lottie options={defaultOptions} height={"70%"} width={"70%"} /> 
           </Grid>
         </Grid>
 
