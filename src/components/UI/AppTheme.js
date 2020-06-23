@@ -32,6 +32,17 @@ export default createMuiTheme({
       fontSize: "1rem",
       minwidth: 10,
       marginLeft: "25px"
+    },
+
+    footerlink:{
+      fontFamily: 'Muli',
+      textTransform: "none",
+      fontWeight: 700,
+      fontStyle: "italic",
+      color: "white",
+      fontSize: "1rem",
+      minwidth: 10,
+      marginLeft: "25px"
     }
 
   },

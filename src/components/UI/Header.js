@@ -93,12 +93,12 @@ const useStyles = makeStyles((theme) => ({
   logo: {
     height: "7em",
     [theme.breakpoints.down("md")]: {
-      height: "4em",
+      height: "6em",
     },
     [theme.breakpoints.down("xs")]: {
-      height: "3em",
+      height: "5em",
     },
-    padding: "0.5em",
+    padding: ".25em",
   },
   logoContainer: {
     padding: 0,
@@ -267,8 +267,8 @@ export default function Header(props) {
             component={Link}
             to={route.link}
             label={route.name}
-            ariaOwns={route.ariaowns}
-            ariaPopup={route.ariahaspopup}
+            aria-owns={route.ariaowns}
+            aria-haspopup={route.ariahaspopup}
             icon={route.icon}
             onMouseOver={route.onMouseOver}
             {...a11yProps(route.index)}

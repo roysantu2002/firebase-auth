@@ -8,16 +8,16 @@ import Hidden from '@material-ui/core/Hidden'
 
 const useStyles = makeStyles((theme) => ({
   footer: {
-    backgroundColor: theme.palette.common.blue,
+    backgroundColor: theme.palette.common.darkRed,
     width: "100%",
     zIndex: 1302,
     position: "relative",
   },
   adortnment: {
-    width: "24em",
+    width: "25em",
     verticalAlign: "bottom",
     [theme.breakpoints.down("md")]: {
-      width: "20em",
+      width: "21em",
     },
     [theme.breakpoints.down("xs")]: {
       width: "15em",
@@ -25,14 +25,18 @@ const useStyles = makeStyles((theme) => ({
   },
   footerContainer: {
     position: "absolute",
+   // ...theme.typography.footerLink,
   },
   footerLink: {
-    color: theme.palette.common.grey,
+    fontFamily: 'Muli',
+    textTransform: "none",
+    color: "white",
     fontSize: "0.75rem",
-    fontWeight: "bold",
+    fontWeigth: "bold",
     textDecoration: "none",
   },
   gridItem: {
+    ...theme.typography.footerLink,
     margin: "3em",
   },
   icon:{
