@@ -26,9 +26,9 @@ export default function LandingPage() {
           <Grid item>
             <div> Shape your dream</div>
             <Grid container>
-              <grid item>
+              <Grid item>
                 <Button variant="contained"> Join Our Community</Button>
-              </grid>
+              </Grid>
             </Grid>
           </Grid>
           <Grid item>

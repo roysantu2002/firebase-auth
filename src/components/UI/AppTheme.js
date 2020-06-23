@@ -1,27 +1,34 @@
 import { createMuiTheme } from "@material-ui/core/styles";
 
-const lightBlue = "#fafafa"
+const red = "#ff3422"
+const gold = "#835A00"
 //const lightBlue = "#bdbdbd";
-const darkGery = "#00000f";
+const darkBlue = "#628078";
 export default createMuiTheme({
   palette: {
     common: {
-      blue: `${lightBlue}`,
-      grey: `${darkGery}`,
+      darkRed: `${red}`,
+      darkGold: `${gold}`,
+      darkBlue: `${darkBlue}`
     },
     primary: {
-      main: `${lightBlue}`,
+      main: `${red}`,
     },
     secondary: {
-      main: `${darkGery}`,
+      main: `${darkBlue}`,
     },
+    darkBlue:{
+      main: `${darkBlue}`
+    }
   },
   typography: {
 
     tab:{
-      fontFamily: 'Cabin',
+      fontFamily: 'Muli',
       textTransform: "none",
       fontWeight: 700,
+      fontStyle: "italic",
+      color: "white",
       fontSize: "1rem",
       minwidth: 10,
       marginLeft: "25px"
