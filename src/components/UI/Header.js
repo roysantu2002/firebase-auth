@@ -7,16 +7,16 @@ import Tabs from "@material-ui/core/Tabs";
 import Tab from "@material-ui/core/Tab";
 import PhoneIcon from "@material-ui/icons/Phone";
 import FavoriteIcon from "@material-ui/icons/Favorite";
-import HomeIcon from '@material-ui/icons/Home';
+import HomeIcon from "@material-ui/icons/Home";
 import HelpIcon from "@material-ui/icons/Help";
-import InfoIcon from '@material-ui/icons/Info';
+import InfoIcon from "@material-ui/icons/Info";
 import ThumbDown from "@material-ui/icons/ThumbDown";
 import ThumbUp from "@material-ui/icons/ThumbUp";
 import useScrollTrigger from "@material-ui/core/useScrollTrigger";
 import Box from "@material-ui/core/Box";
 import { makeStyles } from "@material-ui/core/styles";
 import Typography from "@material-ui/core/Typography";
-import logo from "../../assets/asap.svg";
+// import logo from "../../assets/asap.svg";
 import Button from "@material-ui/core/Button";
 import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
@@ -30,7 +30,6 @@ import List from "@material-ui/core/List";
 import ListItem from "@material-ui/core/ListItem";
 import ListItemIcon from "@material-ui/core/ListItemIcon";
 import ListItemText from "@material-ui/core/ListItemText";
-
 
 //Header elevator
 function ElevationScroll(props) {
@@ -96,7 +95,7 @@ const useStyles = makeStyles((theme) => ({
     // width: "15em",
     [theme.breakpoints.down("md")]: {
       height: "6em",
-      marginLeft: "-1.5em"
+      marginLeft: "-1.5em",
     },
     [theme.breakpoints.down("xs")]: {
       height: "5em",
@@ -154,12 +153,13 @@ const useStyles = makeStyles((theme) => ({
     zIndex: theme.zIndex.modal + 1,
   },
   button: {
+    ...theme.typography.genericFont,
     margin: theme.spacing.unit,
-    fontFamily: 'Muli',
-      textTransform: "none",
-      fontWeight: 700,
-      color: "white",
-  }
+    // fontFamily: 'Muli',
+    textTransform: "none",
+    fontWeight: 700,
+    // color: "white",
+  },
 }));
 
 // const imgStyle = makeStyles({
@@ -209,19 +209,19 @@ export default function Header(props) {
     {
       name: "Home",
       link: "/",
-      icon: <HomeIcon/>,
+      icon: <HomeIcon />,
       activeIndex: 0,
     },
     {
       name: "Who",
       link: "/Who",
-      icon: <HelpIcon/>,
+      icon: <HelpIcon />,
       activeIndex: 1,
     },
     {
       name: "Learn",
       link: "/Learn",
-      icon: <ThumbUp/>,
+      icon: <ThumbUp />,
       activeIndex: 2,
       ariaOwns: anchorEl ? "learn-menu" : undefined,
       ariaPopup: anchorEl ? "true" : undefined,
@@ -229,7 +229,7 @@ export default function Header(props) {
     },
     {
       name: "About Us",
-      icon: <InfoIcon/>,
+      icon: <InfoIcon />,
       link: "/About",
       activeIndex: 3,
     },
@@ -473,7 +473,7 @@ export default function Header(props) {
               to="/"
               onClick={() => props.setValue(0)}
             >
-              <img src={logo} alt="logo" className={classes.logo}></img>
+              <img src="/static/assets/asap.svg" alt="logo" className={classes.logo}></img>
             </Button>
             {matches ? drawer : tabs}
           </Toolbar>

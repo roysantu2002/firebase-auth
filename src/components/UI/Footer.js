@@ -1,7 +1,7 @@
 import React from "react"
 import { Link } from "react-router-dom"
 import { makeStyles } from "@material-ui/core/styles"
-import adornment from "../../assets/adornment.svg"
+// import adornment from "../../assets/adornment.svg"
 import Grid from "@material-ui/core/Grid"
 import Hidden from '@material-ui/core/Hidden'
 
@@ -149,7 +149,7 @@ export default function Footer(props) {
       </Hidden>
       <img
         alt='afterschoolapps'
-        src={adornment}
+        src="static/assets/adornment.svg"
         className={classes.adortnment}
       />
       <Grid container justify="flex-end" spacing={2} className={classes.socialIcon}>

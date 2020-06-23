@@ -28,6 +28,11 @@ export default createMuiTheme({
   },
   typography: {
 
+    genericFont:{
+      fontFamily: 'Muli',
+      color: "white",
+    },
+
     tab:{
       fontFamily: 'Muli',
       textTransform: "none",
@@ -48,6 +53,18 @@ export default createMuiTheme({
       fontSize: "1rem",
       minwidth: 10,
       marginLeft: "25px"
+    },
+    h5:{
+      fontFamily: 'Muli',
+      fontWeight: 700,
+      color: `${red}`,
+      lineHeight: 1.5
+    },
+    h6:{
+      fontFamily: 'Muli',
+      fontWeight: 700,
+      color: `${red}`,
+      lineHeight: 1.5
     }
 
   },

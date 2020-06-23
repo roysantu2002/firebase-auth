@@ -1,16 +1,19 @@
 import React from "react";
-import Lottie from "react-lottie"
+import Lottie from "react-lottie";
 import { makeStyles } from "@material-ui/core/styles";
-import animationData from "../../animation/Onlinework.json"
-import Grid from "@material-ui/core/Grid"
-import Button from '@material-ui/core/Button';
+import animationData from "../../animation/Onlinework.json";
+import Grid from "@material-ui/core/Grid";
+import Button from "@material-ui/core/Button";
+import Typography from "@material-ui/core/Typography";
 
 const useStyles = makeStyles((theme) => ({
-
-  body: {
-    backgroundColor: theme.palette.common.appleGrey,
+  animation:{
+    maxWidth: "50em",
+    minWidth: "21em",
+    marginTop: "2em",
+    marginLeft: "10%"
   }
-
+  
 }));
 
 export default function LandingPage() {
@@ -23,33 +26,25 @@ export default function LandingPage() {
     rendererSettings: {
       preserveAspectRatio: "xMidYMid slice",
     },
-  }
+  };
   return (
-
     <Grid container direction="column">
       <Grid item>
-        <Grid container justify="flex-end" alignItem="center" direction="row">
-          <Grid item>
-            <div> Shape your dream</div>
+        <Grid container justify="flex-end" alignItems="center" direction="row">
+          <Grid sm item>
+            <Typography variant="h5" align="center">“Don’t wait. The time will never be just right.”</Typography>
+            <Typography variant="h6" align="center"> – Napoleon Hill</Typography>
             <Grid container>
-              <Grid item>
+              <Grid item alignItems="center">
                 <Button variant="contained"> Join Our Community</Button>
               </Grid>
             </Grid>
           </Grid>
-          <Grid item>
-          <Lottie options={defaultOptions} height={"70%"} width={"70%"} /> 
+          <Grid sm item className={classes.animation}>
+            <Lottie options={defaultOptions} height={"100%"} width={"100%"} />
           </Grid>
         </Grid>
-
       </Grid>
-
     </Grid>
-
-
-  
-     
-
-
   );
 }
