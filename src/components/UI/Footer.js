@@ -47,7 +47,6 @@ const useStyles = makeStyles((theme) => ({
     },
   },
   socialIcon: {
-    color: theme.palette.common.grey,
     position: "absolute",
     marginTop: "-6em",
     right: "1.5em",
@@ -55,7 +54,6 @@ const useStyles = makeStyles((theme) => ({
       right: "0.6em",
       marginTop: "-5em",
     },
-    
 
   }
 }));

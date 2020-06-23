@@ -15,7 +15,7 @@ export default createMuiTheme({
       main: `${red}`,
     },
     secondary: {
-      main: `${darkBlue}`,
+      main: `${gold}`,
     },
     darkBlue:{
       main: `${darkBlue}`
@@ -29,9 +29,9 @@ export default createMuiTheme({
       fontWeight: 700,
       fontStyle: "italic",
       color: "white",
-      fontSize: "1rem",
-      minwidth: 10,
-      marginLeft: "25px"
+      fontSize: ".8rem",
+      // minwidth: 25,
+      marginLeft: "5px"
     },
 
     footerlink:{
