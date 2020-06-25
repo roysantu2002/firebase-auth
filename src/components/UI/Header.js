@@ -30,6 +30,7 @@ import List from "@material-ui/core/List";
 import ListItem from "@material-ui/core/ListItem";
 import ListItemIcon from "@material-ui/core/ListItemIcon";
 import ListItemText from "@material-ui/core/ListItemText";
+import CustomButton from "./Button/CustomButton";
 
 //Header elevator
 function ElevationScroll(props) {
@@ -155,10 +156,12 @@ const useStyles = makeStyles((theme) => ({
   button: {
     ...theme.typography.genericFont,
     margin: theme.spacing.unit,
-    // fontFamily: 'Muli',
+    borderRadius: 50,
     textTransform: "none",
-    fontWeight: 700,
-    // color: "white",
+    fontWeight: "bold",
+    "&:hover": {
+      backgroundColor: theme.palette.secondary.light
+    }
   },
 }));
 
@@ -262,7 +265,7 @@ export default function Header(props) {
   }, [props.value, menuOptions, props.selectedIndex, routes, props]);
 
   const tabs = (
-    <React.Fragment>
+    <React.Fragment sm>
       <Tabs
         className={classes.tabContainer}
         color="secondary"
@@ -292,19 +295,12 @@ export default function Header(props) {
 
       <Button
         component={Link}
-        href="/estimate"
+        href="/login"
         variant="contained"
         color="secondary"
         className={classes.button}
-        // onClick={() => {
-        //   props.setValue(false);
-        //   ReactGA.event({
-        //     category: "Estimate",
-        //     action: "Header Desktop Pressed",
-        //   });
-        // }}
       >
-        SignUp
+        SIGN UP
       </Button>
 
       <Menu

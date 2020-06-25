@@ -5,15 +5,27 @@ import animationData from "../../animation/Onlinework.json";
 import Grid from "@material-ui/core/Grid";
 import Button from "@material-ui/core/Button";
 import Typography from "@material-ui/core/Typography";
+import CustomButton from "./Button/CustomButton";
 
 const useStyles = makeStyles((theme) => ({
-  animation:{
+  animation: {
     maxWidth: "50em",
     minWidth: "21em",
     marginTop: "2em",
-    marginLeft: "10%"
-  }
-  
+    marginLeft: "10%",
+  },
+  joinus: {
+    ...theme.typography.genericFont,
+    borderRadius: 50,
+    width: 145,
+    height: 45,
+    marginRight: 40,
+    fontSize: "1rem",
+    fontWeight: "bold",
+    "&:hover": {
+      backgroundColor: theme.palette.primary.light
+    }
+  },
 }));
 
 export default function LandingPage() {
@@ -28,16 +40,30 @@ export default function LandingPage() {
     },
   };
   return (
-    <Grid container direction="column">
+    <Grid container direction='column'>
       <Grid item>
-        <Grid container justify="flex-end" alignItems="center" direction="row">
+        <Grid container justify='flex-end' alignItems='center' direction='row'>
           <Grid sm item>
-            <Typography variant="h5" align="center">“Don’t wait. The time will never be just right.”</Typography>
-            <Typography variant="h6" align="center"> – Napoleon Hill</Typography>
-            <Grid container>
-              <Grid item alignItems="center">
-                <Button variant="contained"> Join Our Community</Button>
+            <Typography variant='h5' align='center'>
+              “Don’t wait. The time will never be just right.”
+            </Typography>
+            <Typography variant='h6' align='center'>
+              {" "}
+              – Napoleon Hill
+            </Typography>
+            <Grid container justify="center">
+              <Grid item>
+                <CustomButton className={classes.joinus}>Join Us</CustomButton>
+                {/* <CustomButton color='secondary'>
+                  Custom using Secondary
+                </CustomButton>
+                <CustomButton className={classes.button3}>
+                  Custom using more styles
+                </CustomButton>
+                <CustomButton disabled>Disabled</CustomButton>
+                <Button variant='contained'> Join Our Community</Button> */}
               </Grid>
+              <Grid item></Grid>
             </Grid>
           </Grid>
           <Grid sm item className={classes.animation}>
