@@ -48,20 +48,11 @@ export default function LandingPage() {
               “Don’t wait. The time will never be just right.”
             </Typography>
             <Typography variant='h6' align='center'>
-              {" "}
               – Napoleon Hill
             </Typography>
             <Grid container justify="center">
               <Grid item>
                 <CustomButton className={classes.joinus}>Join Us</CustomButton>
-                {/* <CustomButton color='secondary'>
-                  Custom using Secondary
-                </CustomButton>
-                <CustomButton className={classes.button3}>
-                  Custom using more styles
-                </CustomButton>
-                <CustomButton disabled>Disabled</CustomButton>
-                <Button variant='contained'> Join Our Community</Button> */}
               </Grid>
               <Grid item></Grid>
             </Grid>

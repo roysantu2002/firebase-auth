@@ -157,11 +157,14 @@ const useStyles = makeStyles((theme) => ({
     ...theme.typography.genericFont,
     margin: theme.spacing.unit,
     borderRadius: 50,
+    width: 110,
     textTransform: "none",
     fontWeight: "bold",
     "&:hover": {
       backgroundColor: theme.palette.secondary.light
-    }
+    },
+    fontSize: ".8rem",
+
   },
 }));
 
