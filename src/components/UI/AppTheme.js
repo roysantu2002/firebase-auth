@@ -2,7 +2,7 @@ import { createMuiTheme } from "@material-ui/core/styles";
 
 const red = "#ff3422"
 const gold = "#835A00"
-//const lightBlue = "#bdbdbd";
+const lightBlue = "#051e3e";
 const darkBlue = "#628078"
 
 const appleGrey = "#999999"
@@ -54,6 +54,18 @@ export default createMuiTheme({
       minwidth: 10,
       marginLeft: "25px"
     },
+    h2:{
+      fontFamily: 'Muli',
+      fontSize: "2.5rem",
+      color: `${red}`,
+      fontWeight: 700,
+    },
+    h4:{
+      fontFamily: 'Muli',
+      fontSize: "1.75rem",
+      color: `${red}`,
+      fontWeight: 700,
+    },
     h5:{
       fontFamily: 'Muli',
       fontWeight: 700,
@@ -65,6 +77,11 @@ export default createMuiTheme({
       fontWeight: 700,
       color: `${red}`,
       lineHeight: 1.5
+    },
+    subtitle1:{
+      fontSize: "1.25rem",
+      fontWeight: 300,
+      color: `${lightBlue}`,
     }
 
   },

@@ -6,6 +6,7 @@ import Grid from "@material-ui/core/Grid";
 import Button from "@material-ui/core/Button";
 import Typography from "@material-ui/core/Typography";
 import CustomButton from "./Button/CustomButton";
+import support from "../../assets/support.svg"
 
 const useStyles = makeStyles((theme) => ({
   animation: {
@@ -13,6 +14,9 @@ const useStyles = makeStyles((theme) => ({
     minWidth: "21em",
     marginTop: "2em",
     marginLeft: "10%",
+    [theme.breakpoints.down("xs")]: {
+      maxWidth: "30em",
+    },
   },
   joinus: {
     ...theme.typography.genericFont,
@@ -23,9 +27,32 @@ const useStyles = makeStyles((theme) => ({
     fontSize: "1rem",
     fontWeight: "bold",
     "&:hover": {
-      backgroundColor: theme.palette.primary.light
-    }
+      backgroundColor: theme.palette.primary.light,
+    },
   },
+  mainContainer: {
+    marginTop: "4em",
+    [theme.breakpoints.down("md")]: {
+      marginBottom: "3em",
+    },
+    [theme.breakpoints.down("xs")]: {
+      marginBottom: "2em",
+    },
+  },
+  textContainer: {
+    minWidth: "21.5em",
+    marginLeft: "1em",
+    [theme.breakpoints.down("xs")]: {
+      marginLeft: 0,
+    },
+  },
+  successText:{
+    color: theme.palette.common.darkGold,
+    fontFamily: "Philosopher",
+    fontWeight: "bold",
+    fontStyle: "italic",
+
+  }
 }));
 
 export default function LandingPage() {
@@ -40,17 +67,18 @@ export default function LandingPage() {
     },
   };
   return (
-    <Grid container direction='column'>
+    <Grid container direction='column' className={classes.mainContainer}>
       <Grid item>
+        {/*----Main Header----*/}
         <Grid container justify='flex-end' alignItems='center' direction='row'>
-          <Grid sm item>
-            <Typography variant='h5' align='center'>
+          <Grid sm item className='textContainer'>
+            <Typography variant='h2' align='center'>
               “Don’t wait. The time will never be just right.”
             </Typography>
             <Typography variant='h6' align='center'>
               – Napoleon Hill
             </Typography>
-            <Grid container justify="center">
+            <Grid container justify='center'>
               <Grid item>
                 <CustomButton className={classes.joinus}>Join Us</CustomButton>
               </Grid>
@@ -62,6 +90,24 @@ export default function LandingPage() {
           </Grid>
         </Grid>
       </Grid>
+      <Grid item> {/*----We Offer----*/}
+      <Grid container direction="raw">
+        <Grid item>
+          <Typography variant="h4">
+            We connect Students and Teachers
+          </Typography>
+          <Typography variant="subtitle1">
+            How do we help you?
+          </Typography>
+          <Typography variant="subtitle1">
+            Our access ensures your <span className={classes.successText}>success</span>
+          </Typography>
+          <Button variant="outlined">Learn More</Button>
+        </Grid>
+        <Grid item>
+          <img alt="support" src={support}/>
+        </Grid>
+        </Grid></Grid>
     </Grid>
   );
 }
