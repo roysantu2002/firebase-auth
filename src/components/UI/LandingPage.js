@@ -6,7 +6,7 @@ import Grid from "@material-ui/core/Grid";
 import Button from "@material-ui/core/Button";
 import Typography from "@material-ui/core/Typography";
 import CustomButton from "./Button/CustomButton";
-import support from "../../assets/support.svg"
+import connect from "../../assets/student-teacher.svg"
 
 const useStyles = makeStyles((theme) => ({
   animation: {
@@ -51,8 +51,23 @@ const useStyles = makeStyles((theme) => ({
     fontFamily: "Philosopher",
     fontWeight: "bold",
     fontStyle: "italic",
-
+  },
+  support: {
+    height: "10em",
+    width: "10em",
+    marginLeft: "2em",
+    [theme.breakpoints.down("xs")]: {
+      marginLeft: 0,
+    },
+ 
+  },
+  sub: {
+    marginBottom: "1em"
+  },
+  connect: {
+    marginTop: "10em"
   }
+
 }));
 
 export default function LandingPage() {
@@ -90,13 +105,13 @@ export default function LandingPage() {
           </Grid>
         </Grid>
       </Grid>
-      <Grid item> {/*----We Offer----*/}
-      <Grid container direction="raw">
+      <Grid item className={classes.connect}> {/*----We Offer----*/}
+      <Grid container style={{marginLeft: "5em"}} direction="raw">
         <Grid item>
           <Typography variant="h4">
-            We connect Students and Teachers
+            We connect you with the appropriate Mentor
           </Typography>
-          <Typography variant="subtitle1">
+          <Typography variant="subtitle1" className={classes.sub}>
             How do we help you?
           </Typography>
           <Typography variant="subtitle1">
@@ -105,7 +120,7 @@ export default function LandingPage() {
           <Button variant="outlined">Learn More</Button>
         </Grid>
         <Grid item>
-          <img alt="support" src={support}/>
+          <img alt="connect" style={{ color: "#ff3422" }} src={connect} className={classes.support} />
         </Grid>
         </Grid></Grid>
     </Grid>
