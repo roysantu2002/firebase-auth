@@ -117,9 +117,6 @@ export default function Footer(props) {
               >
                 Robotics
               </Grid>
-        
-             
-           
             </Grid>
           </Grid>
           <Grid item className={classes.gridItem}>
@@ -149,26 +146,29 @@ export default function Footer(props) {
             </Grid>
           </Grid>
           <Grid item className={classes.gridItem}>
-          <Grid container direction="column" spacing={2}>
+            <Grid container direction="column" spacing={2}>
               <Grid
                 item
-                className={classes.footerLink}>
-             <Typography variant="caption">
-              {'Icons made by '}
-              <Link href="https://www.freepik.com" rel="sponsored" title="Freepik">
-                Freepik
-              </Link>
-            </Typography>
+                component={"a"}
+                href="https://www.freepik.com"
+                rel="sponsored"
+                target="_blank"
+                className={classes.footerLink}
+              >
+                <Typography variant="caption">
+                  {"Icons made by "}
+                  Freepik
+                </Typography>
+              </Grid>
             </Grid>
-            </Grid>
-            </Grid>
+          </Grid>
         </Grid>
       </Hidden>
       <img
         alt="afterschoolapps"
         src="static/assets/adornment.svg"
         className={classes.adortnment}
-      /> 
+      />
 
       <Grid
         container
@@ -215,9 +215,7 @@ export default function Footer(props) {
             className={classes.icon}
           ></img>
         </Grid>
-        
       </Grid>
-               
     </footer>
   );
 }

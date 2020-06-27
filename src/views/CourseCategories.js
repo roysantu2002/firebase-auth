@@ -89,56 +89,56 @@ function ProductCategories(props) {
   const images = [
     {
       url:
-        'https://images.unsplash.com/photo-1534081333815-ae5019106622?auto=format&fit=crop&w=400&q=80',
-      title: 'Snorkeling',
+        '/static/assets/Computer.jpg',
+      title: 'Computer',
       width: '40%',
     },
     {
       url:
-        'https://images.unsplash.com/photo-1531299204812-e6d44d9a185c?auto=format&fit=crop&w=400&q=80',
-      title: 'Massage',
+        '/static/assets/Coding.jpg',
+      title: 'Coding',
       width: '20%',
     },
     {
       url:
-        'https://images.unsplash.com/photo-1476480862126-209bfaa8edc8?auto=format&fit=crop&w=400&q=80',
-      title: 'Hiking',
+        '/static/assets/Robotics.jpg',
+      title: 'Robotics',
       width: '40%',
     },
     {
       url:
-        'https://images.unsplash.com/photo-1453747063559-36695c8771bd?auto=format&fit=crop&w=400&q=80',
-      title: 'Tour',
+        '/static/assets/Baking.jpg',
+      title: 'Baking',
       width: '38%',
     },
     {
       url:
-        'https://images.unsplash.com/photo-1523309996740-d5315f9cc28b?auto=format&fit=crop&w=400&q=80',
-      title: 'Gastronomy',
+        '/static/assets/Cooking.jpg',
+      title: 'Cooking',
       width: '38%',
     },
     {
       url:
-        'https://images.unsplash.com/photo-1534452203293-494d7ddbf7e0?auto=format&fit=crop&w=400&q=80',
-      title: 'Shopping',
+      '/static/assets/Dancing.jpg',
+      title: 'Dancing',
       width: '24%',
     },
     {
       url:
-        'https://images.unsplash.com/photo-1506941433945-99a2aa4bd50a?auto=format&fit=crop&w=400&q=80',
-      title: 'Walking',
+      '/static/assets/Writing.jpg',
+      title: 'Writing',
       width: '40%',
     },
     {
       url:
-        'https://images.unsplash.com/photo-1533727937480-da3a97967e95?auto=format&fit=crop&w=400&q=80',
-      title: 'Fitness',
+      '/static/assets/Videography.jpg',
+      title: 'Videography',
       width: '20%',
     },
     {
       url:
-        'https://images.unsplash.com/photo-1518136247453-74e7b5265980?auto=format&fit=crop&w=400&q=80',
-      title: 'Reading',
+      '/static/assets/Filmmaking.jpg',
+      title: 'Filmmaking',
       width: '40%',
     },
   ];
@@ -146,7 +146,7 @@ function ProductCategories(props) {
   return (
     <Container className={classes.root} component="section">
       <Typography variant="h4" marked="center" align="center" component="h2">
-        For all tastes and all desires
+        For all your dreams and all desires
       </Typography>
       <div className={classes.images}>
         {images.map((image) => (
