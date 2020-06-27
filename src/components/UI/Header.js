@@ -154,12 +154,12 @@ const useStyles = makeStyles((theme) => ({
     zIndex: theme.zIndex.modal + 1,
   },
   button: {
-    ...theme.typography.genericFont,
+    fontWeight: theme.typography.fontWeightMedium,
+    fontFamily: theme.typography.fontFamilySecondary,
     margin: theme.spacing.unit,
     borderRadius: 50,
     width: 110,
     textTransform: "none",
-    fontWeight: "bold",
     "&:hover": {
       backgroundColor: theme.palette.secondary.light
     },

@@ -7,6 +7,7 @@ import Header from "./UI/Header";
 import Footer from "./UI/Footer";
 import theme from "./UI/AppTheme";
 import LandingPage from "./UI/LandingPage";
+import Home from './Home'
 
 function App() {
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -22,7 +23,7 @@ function App() {
         />
 
         <Switch>
-          <Route exact path="/" component={LandingPage}/>
+          <Route exact path="/" component={Home}/>
           <Route exact path="/Who" component={() => <div>Who</div>}></Route>
           <Route exact path="/Learn" component={() => <div>Learn</div>}></Route>
           <Route exact path="/Writing" component={() => <div>Writing</div>}></Route>

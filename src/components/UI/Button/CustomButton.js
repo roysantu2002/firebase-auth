@@ -8,7 +8,8 @@ const styles = () => ({
     padding: 2,
     width: 180,
     fontSize: 10,
-    fontWeight: "bold"
+    fontWeight: "bold",
+    
   }
 });
 
@@ -17,4 +18,4 @@ function CustomButton(props) {
 }
 
 export default CustomButton;
-//export default withStyles(styles)(CustomButton);
+
