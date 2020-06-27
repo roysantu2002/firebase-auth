@@ -1,21 +1,30 @@
 import React from "react";
 import Button from "@material-ui/core/Button";
-import { withStyles } from "@material-ui/core/styles";
+import { makeStyles } from "@material-ui/core/styles";
+import PropTypes from 'prop-types';
 
-const styles = () => ({
+const useStyles = theme => ({
   root: {
-    margin: 5,
-    padding: 2,
-    width: 180,
-    fontSize: 10,
-    fontWeight: "bold",
-    
-  }
+    borderRadius: 0,
+    fontWeight: theme.typography.fontWeightMedium,
+    fontFamily: theme.typography.fontFamilySecondary,
+    padding: theme.spacing(2, 4),
+    fontSize: theme.typography.pxToRem(14),
+    boxShadow: 'none',
+    '&:active, &:focus': {
+      boxShadow: 'none',
+    },
+  },
 });
 
 function CustomButton(props) {
-  return <Button variant="contained" color="primary" {...props} />;
+  const classes = useStyles();
+  return <Button variant="contained"  className={classes.root}/>;
 }
 
-export default CustomButton;
+// CustomButton.propTypes = {
+//   classes: PropTypes.object.isRequired,
+// };
+
+export default CustomButton
 

@@ -4,6 +4,7 @@ import { makeStyles } from "@material-ui/core/styles"
 // import adornment from "../../assets/adornment.svg"
 import Grid from "@material-ui/core/Grid"
 import Hidden from '@material-ui/core/Hidden'
+import Typography from '../Typography';
 
 const useStyles = makeStyles((theme) => ({
   footer: {
@@ -145,7 +146,9 @@ export default function Footer(props) {
             </Grid>
           </Grid>
         </Grid>
+       
       </Grid>
+      
       </Hidden>
       <img
         alt='afterschoolapps'
@@ -162,7 +165,11 @@ export default function Footer(props) {
         <Grid item component={"a"}   src="static/assets/twitter.svg" rel="noopener noreferrer" target="_blank"> 
           <img src="static/assets/instagram.svg" alt='instagram' className={classes.icon}></img>
         </Grid>
+        
       </Grid>
+
+
+      
      
     </footer>
   );

@@ -6,7 +6,6 @@ import { ThemeProvider } from "@material-ui/styles";
 import Header from "./UI/Header";
 import Footer from "./UI/Footer";
 import theme from "./UI/AppTheme";
-import LandingPage from "./UI/LandingPage";
 import Home from './Home'
 
 function App() {

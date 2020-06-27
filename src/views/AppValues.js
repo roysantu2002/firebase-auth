@@ -9,13 +9,14 @@ const styles = (theme) => ({
   root: {
     display: 'flex',
     overflow: 'hidden',
-    backgroundColor: theme.palette.secondary.light,
+    backgroundImage: `URL(${"/static/assets/bubble.png"})`,
   },
   container: {
     marginTop: theme.spacing(15),
     marginBottom: theme.spacing(30),
     display: 'flex',
     position: 'relative',
+    
   },
   item: {
     display: 'flex',
@@ -42,26 +43,26 @@ function ProductValues(props) {
 
   return (
     <section className={classes.root}>
-      <Container className={classes.container}>
-        <img
-          src="/static/themes/onepirate/productCurvyLines.png"
+      <Container className={classes.container} >
+        {/* <img
+          src="/static/assets/bubble.png"
           className={classes.curvyLines}
           alt="curvy lines"
-        />
+        /> */}
         <Grid container spacing={5}>
           <Grid item xs={12} md={4}>
             <div className={classes.item}>
               <img
                 className={classes.image}
-                src="/static/themes/onepirate/productValues1.svg"
+                src="/static/assets/push.svg"
                 alt="suitcase"
               />
               <Typography variant="h6" className={classes.title}>
-                The best luxury hotels
+                Chanllenge yourself
               </Typography>
               <Typography variant="h5">
-                {'From the latest trendy boutique hotel to the iconic palace with XXL pool'}
-                {', go for a mini-vacation just a few subway stops away from your home.'}
+                {'Why Challenge Yourself?'} <br/>
+                {', achiever went little far from the comfort zone.'}
               </Typography>
             </div>
           </Grid>
@@ -69,14 +70,14 @@ function ProductValues(props) {
             <div className={classes.item}>
               <img
                 className={classes.image}
-                src="/static/themes/onepirate/productValues2.svg"
+                src="/static/assets/connect.svg"
                 alt="graph"
               />
               <Typography variant="h6" className={classes.title}>
-                New experiences
+                Connect us
               </Typography>
               <Typography variant="h5">
-                {'Privatize a pool, take a Japanese bath or wake up in 900m2 of garden… '}
+              {'Why Afterschool?'} <br/>
                 {'your Sundays will not be alike.'}
               </Typography>
             </div>
@@ -85,11 +86,11 @@ function ProductValues(props) {
             <div className={classes.item}>
               <img
                 className={classes.image}
-                src="/static/themes/onepirate/productValues3.svg"
+                src="/static/assets/grow.svg"
                 alt="clock"
               />
               <Typography variant="h6" className={classes.title}>
-                Exclusive rates
+                Achieve goals
               </Typography>
               <Typography variant="h5">
                 {'By registering, you will access specially negotiated rates '}

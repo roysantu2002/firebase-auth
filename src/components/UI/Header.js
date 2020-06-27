@@ -16,8 +16,6 @@ import useScrollTrigger from "@material-ui/core/useScrollTrigger";
 import Box from "@material-ui/core/Box";
 import { makeStyles } from "@material-ui/core/styles";
 import Typography from "@material-ui/core/Typography";
-// import logo from "../../assets/asap.svg";
-import Button from "@material-ui/core/Button";
 import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
 import useMediaQuery from "@material-ui/core/useMediaQuery";
@@ -30,7 +28,9 @@ import List from "@material-ui/core/List";
 import ListItem from "@material-ui/core/ListItem";
 import ListItemIcon from "@material-ui/core/ListItemIcon";
 import ListItemText from "@material-ui/core/ListItemText";
-import CustomButton from "./Button/CustomButton";
+// import CustomButton from './Button/CustomButton'
+import Button from '@material-ui/core/Button';
+
 
 //Header elevator
 function ElevationScroll(props) {
@@ -153,16 +153,16 @@ const useStyles = makeStyles((theme) => ({
   appbar: {
     zIndex: theme.zIndex.modal + 1,
   },
-  button: {
+  customButton: {
     fontWeight: theme.typography.fontWeightMedium,
     fontFamily: theme.typography.fontFamilySecondary,
     margin: theme.spacing.unit,
     borderRadius: 50,
     width: 110,
     textTransform: "none",
-    "&:hover": {
-      backgroundColor: theme.palette.secondary.light
-    },
+    // "&:hover": {
+    //   backgroundColor: theme.palette.secondary.light
+    // },
     fontSize: ".8rem",
 
   },
@@ -298,10 +298,10 @@ export default function Header(props) {
 
       <Button
         component={Link}
+        color='secondary'
         href="/login"
         variant="contained"
-        color="secondary"
-        className={classes.button}
+        className={classes.customButton}
       >
         SIGN UP
       </Button>
