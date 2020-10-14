@@ -2,7 +2,6 @@
 
   "builders": [{
     "type": "azure-arm",
-    "client_id": "",
     "client_id": "dc8947bf-f0b2-440b-b829-148ebd3c3fbc",
     "client_secret": "",
     "tenant_id": "fb6ea403-7cf1-4905-810a-fe5547e98204",
@@ -167,6 +166,3 @@
    }
   ]
 }
-
-
-
