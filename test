@@ -1,1 +1,259 @@
 
+{
+  "variables": {
+  "client_id": "",
+  "client_secret": "",
+  "tenant_id": "",
+  "subscription_id": "",
+  "environment":"",
+  "managed_image_resource_group_name": "",
+  "managed_image_gallery_name":"",
+  "managed_image_gallery_image_name":"",
+  "managed_image_gallery_image_version":"",
+  "managed_image_replication_regions":"",
+  "managed_image_os_disk_snapshot_name":"",
+  "build_resource_group_name": "",
+  "build_managed_image_name": "",
+  "build_virtual_network_name":"",
+  "build_virtual_network_subnet_name":"",
+  "build_virtual_network_resource_group_name":""
+ },
+
+  "builders": [
+      {
+    "type": "azure-arm",
+
+    "client_id": "{{user `client_id`}}",
+    "client_secret": "{{user `client_secret`}}",
+    "tenant_id": "{{user `tenant_id`}}",
+    "subscription_id": "{{user `subscription_id`}}",
+    "managed_image_name": "{{user `build_managed_image_name`}}",
+    "managed_image_os_disk_snapshot_name": "{{user `managed_image_os_disk_snapshot_name`}}",
+    "build_resource_group_name": "{{user `build_resource_group_name`}}",
+    "managed_image_resource_group_name": "{{user `managed_image_resource_group_name`}}",
+    "os_type": "Windows",
+    "image_publisher": "MicrosoftWindowsDesktop",
+    "image_offer": "Windows-10",
+    "image_sku": "19h2-ent",
+    "shared_image_gallery_replica_count": "1",
+
+    "shared_image_gallery_destination": {
+        "resource_group": "{{user `managed_image_resource_group_name`}}",
+        "gallery_name": "{{user `managed_image_gallery_name`}}",
+        "image_name": "{{user `managed_image_gallery_image_name`}}",
+        "image_version": "{{user `managed_image_gallery_image_version`}}",
+        "replication_regions": "{{user `managed_image_replication_regions`}}"
+    },
+
+      "communicator": "winrm",
+      "winrm_use_ssl": true,
+      "winrm_insecure": true,
+      "winrm_timeout": "5m",
+      "winrm_username": "packer",
+      "managed_image_storage_account_type": "Premium_LRS",
+      "virtual_network_name": "{{user `build_virtual_network_name`}}",
+      "virtual_network_subnet_name": "{{user `build_virtual_network_subnet_name`}}",
+      "private_virtual_network_with_public_ip": "False",
+      "virtual_network_resource_group_name": "{{user `build_virtual_network_resource_group_name`}}",
+  
+      "azure_tags": {
+          "dept": "Engineering",
+          "task": "SchedTask"
+      },
+  
+      "vm_size": "Standard_F4s_v2"
+    }
+    ],
+    
+    "provisioners": [
+      {
+          "type": "powershell",
+          "environment_vars" : [
+            "UBS_ENV={{user `environment`}}"
+          ],
+          "timeout": "5m",
+          "script": "./MultiStage/Scripts/Set-Env.ps1"
+      },
+      {
+        "type": "file",
+        "source": "./MultiStage/DefaultAssociations/",
+        "destination": "C:\\Programdata\\UBS\\DefaultAssociations"
+      },
+      {
+        "type": "file",
+        "source": "./MultiStage/PostOSConfig_1.0/_Packages",
+        "destination": "C:\\Programdata\\UBS\\PWBE"
+      },
+      {
+        "type": "windows-shell",
+        "inline": [
+          "powershell.exe -ExecutionPolicy Bypass -File C:/ProgramData/UBS/PWBE/_Packages/EnvironmentConfig_1.15/Wrapper.ps1 -Features Install-Locally,Create-BlackBoard,Create-LogDir,User-Common-Config,Disable-HostTime"
+        ]
+      },
+      {
+        "type": "windows-shell",
+        "inline": [
+          "powershell.exe -ExecutionPolicy Bypass -File C:/ProgramData/UBS/PWBE/_Packages/PWBE_ComplianceChecks_1.02/Wrapper.ps1 -Features PKG_RUN_FEATURES"
+        ]
+      },
+      {
+        "type": "windows-shell",
+        "inline": [
+          "powershell.exe -ExecutionPolicy Bypass -File C:/ProgramData/UBS/PWBE/_Packages/PWBE_Security_Hardening_1.2/Wrapper.ps1 -Features PKG_RUN_FEATURES"
+        ]
+      },
+      {
+        "type": "file",
+        "source": "./MultiStage/TransmitForWinLogon_1.04",
+        "destination": "C:\\UBS"
+      },
+      {
+        "type": "windows-shell",
+        "inline": [
+            "set install_mode=ins&&cmd /k C:/UBS/TransmitForWinLogon_1.04/Control.cmd"
+        ]
+      },
+      {
+        "type": "file",
+        "source": "./MultiStage/Certs",
+        "destination": "C:\\UBS"
+      },
+      {
+        "type": "powershell",
+        "timeout": "5m",
+        "script": "./MultiStage/Scripts/Install-UBSCerts.ps1"
+      },
+      {
+        "type": "file",
+        "source": "./MultiStage/FSLogix",
+        "destination": "C:\\UBS"
+      },
+      {
+        "type": "file",
+        "source": "./MultiStage/WindowsDefenderATPOnboardingPackage",
+        "destination": "C:\\UBS"
+      },
+      {
+        "type": "file",
+        "source": "./MultiStage/UserConfig",
+        "destination": "C:\\UBS"
+      },
+      {
+        "type": "file",
+        "source": "./MultiStage/Windows_10_VDI_Optimize",
+        "destination": "C:\\UBS"
+      },
+      {
+        "type": "file",
+        "source": "./MultiStage/BGInfo",
+        "destination": "C:\\UBS"
+      },
+      {
+        "type": "windows-shell",
+        "inline": [
+            "cmd /c \"mkdir c:\\\\UBS\\GoogleChromeBrowser_3.43"
+        ]
+      },
+      {
+        "type": "powershell",
+        "timeout": "5m",
+        "script": "./MultiStage/Scripts/System-Conf.ps1"
+      },
+      {
+        "type": "powershell",
+        "timeout": "5m",
+        "script": "./MultiStage/Scripts/Install-Chrome.ps1"
+      },
+      {
+        "type": "powershell",
+        "timeout": "5m",
+        "script": "./MultiStage/Scripts/Install-Chromium.ps1"
+      },
+      {
+        "type": "powershell",
+        "timeout": "5m",
+        "script": "./MultiStage/Scripts/Install-FSLogix.ps1"
+      },
+      {
+        "type": "powershell",
+        "timeout": "5m",
+        "inline": [
+          "$currentfolder=$pwd;cd C:/UBS/FSLogix/;.\\RegisterScheduledTaskAtLogon.ps1;cd $currentfolder"
+        ]
+       },
+       {
+        "type": "powershell",
+        "timeout": "5m",
+        "inline": [
+          "$currentfolder=$pwd;cd C:/UBS/BGInfo/;.\\RegisterScheduled.ps1;cd $currentfolder"
+        ]
+       },
+       {
+        "type": "powershell",
+        "timeout": "5m",
+        "inline": [
+          "$currentfolder=$pwd;cd C:/UBS/UserConfig/;.\\RegisterUserConf.ps1;cd $currentfolder"
+        ]
+       },
+      {
+        "type": "powershell",
+        "timeout": "30m",
+        "script": "./MultiStage/Windows_10_VDI_Optimize/Win10_1909_VDI_Optimize.ps1"
+      },
+      {
+        "type": "powershell",
+        "timeout": "5m",
+        "script": "./MultiStage/Scripts/Disable-NLA.ps1"
+      },
+      {
+        "type": "powershell",
+        "elevated_user": "SYSTEM",
+        "elevated_password": "",
+        "timeout": "5m",
+        "inline": [
+          "DISM /Online /Enable-Feature /FeatureName:NetFx3 /All"
+        ]
+      },
+      {
+        "type": "file",
+        "source": "./MultiStage/PesterTests",
+        "destination": "C:\\UBS"
+      },
+      {
+      "type": "powershell",
+	    "environment_vars" : [
+            "UBS_ENV={{user `environment`}}"
+          ],
+      "inline":[
+          "cd C:/UBS/PesterTests/;Invoke-Pester C:/UBS/PesterTests/PesterTests.ps1 -OutputFile TestResults.xml -OutputFormat NUnitXml"
+      ]
+      },
+      {
+      "type": "file",
+      "source": "C:/UBS/PesterTests/TestResults.xml",
+      "destination": "TestResults.xml",
+      "direction": "download"
+      },
+      {
+        "type": "windows-restart",
+        "restart_check_command": "powershell -command \"& {Write-Output 'restarted.'}\""
+      },
+      {
+      "type": "powershell",
+       "inline": [
+        "New-Item -Path HKLM:\\Software\\Microsoft\\DesiredStateConfiguration",
+        "New-ItemProperty -Path HKLM:\\Software\\Microsoft\\DesiredStateConfiguration -Name 'AgentId' -PropertyType STRING -Force"
+       ]
+     },
+      {
+        "type": "powershell",
+        "inline": [
+          "if( Test-Path $Env:SystemRoot\\windows\\system32\\Sysprep\\unattend.xml ){ rm $Env:SystemRoot\\windows\\system32\\Sysprep\\unattend.xml -Force}",
+          "& $env:SystemRoot\\System32\\Sysprep\\Sysprep.exe /oobe /generalize /quiet /quit",
+          "while($true) { $imageState = Get-ItemProperty HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Setup\\State | Select ImageState; if($imageState.ImageState -ne 'IMAGE_STATE_GENERALIZE_RESEAL_TO_OOBE') { Write-Output $imageState.ImageState; Start-Sleep -s 10  } else { break } }"
+        ]
+       }
+      ]
+    }
+    
+   
