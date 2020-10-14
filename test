@@ -1,207 +1,103 @@
-#Domain join
-
-#Global 
-
-function _query{
+function createvmAPI {
 
     param (
         [parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]$LAB_NAME, $RESOURCE_GROUP, $QUERY
+        [ValidateNotNullOrEmpty()]$CREATE_VM_URL, $SUBSCRIPTION_ID, $RESOURCEID, $LAB_ID, $VMPREFIX, $USERUPN, $MACHINESIZE
     )
 
-    $query = az lab GET --name $LAB_NAME --resource-group $RESOURCE_GROUP  --query $QUERY -o tsv
-    return $query
+    $url = $CREATE_VM_URL
+    $resourceId = $RESOURCEID
+    $labId = "/subscriptions/"+$SUBSCRIPTION_ID+"/resourcegroups/"+$RESOURCEID+"/providers/microsoft.devtestlab/labs/"+$LAB_ID
+    $vmPrefix = $VMPREFIX
+    # $vmName = $VMNAME
+    $userUpn = $USERUPN
+    $machineSize = $MACHINESIZE
+    # $subnetName = $SUBNET
 
-}
+    Write-Host "labid:" $labId
+    $bodyContent = '{{
+    "labId":"{0}",
+    "vmPrefix":"{1}",
+    "userUpn":"{2}",
+    "machineSize":"{3}"
+}}' -f $labId, $vmPrefix, $userUpn, $machineSize
 
-function getLabDetails {
-    param (
-        [parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]$LAB_NAME, $RESOURCE_GROUP, $SEARCH_VAL
-    )
+    $body = '{
+    "resourceId": "/subscriptions/"f9632259-8c0f-4e06-a435-b049084f346b/resourcegroups/rg-az-devtestlabs-neu-local-008/providers/microsoft.devtestlab/labs/dtl-dd-lab-008-neu-eng/virtualmachines/lab008create010",
+    "labId" : "rg-az-devtestlabs-neu-local-008",
+    "vmPrefix" : "san",
+    "vmName": "royvmXXX001",
+    "userUpn": "santu.roy@ubsdev.com",
+    "machineSize": "Standard_D3_v2",
+    "subnetName": "user-0001"
+}'
 
-    $labData = ""
-    $fileName = "Lab_" + (get-Date).ToString("dd-MM-yyyy-hh-mm-ss")
+#'http://localhost:7071/api/orchestrators/CreateVirtualMachineWorkflow'
 
+    $param = @{
+        Uri         =  $url
+        Method      = 'POST'
+        Body        = $bodyContent 
+        ContentType = 'application/json'
+    }
+
+    $output = ""
+
+    Write-Host "url: " $url
+    Write-Host "func app url print" $url
+    # Write-Host "Body :" @param
     try {
-        $labData = az lab GET --name $LAB_NAME --resource-group $RESOURCE_GROUP | ConvertFrom-JSON
-        $labData | select * |  Export-Csv -Path  $fileName".csv"
-      
+        #  $result = Invoke-RestMethod -Method 'Post' -Uri $url -Body $bodyContent
+        $result = Invoke-RestMethod @param
+        $startTime = $(get-date)
+        Write-host "Invoke-RestMethod:00:00:00"   
+        $startTime = Get-Date -Format "dddd MM/dd/yyyy HH:mm K"
+        Write-Host "StartTime:" $startTime
+        Start-Sleep -s 30
+        Write-Host "Wait....."
+        $statusQueryGetUri = $result.statusQueryGetUri 
+        Write-Host "statusQueryGetUri: "  $statusQueryGetUri
+        if(!$null -eq  $statusQueryGetUri){
 
-    }
-    catch {  }
+            $statusURLResponse = Invoke-WebRequest -URI $statusQueryGetUri
+            $rs = $statusURLResponse.Content | ConvertFrom-Json
+            $runtimeStatus = $rs.runtimeStatus
 
-    return $labData
-}
+            $waitCount = 1
+            while($waitCount -lt 25){
+                if($runtimeStatus -eq "Running"){
 
-function getJSONFields {
-    param (
-        [parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]$LAB_NAME, $RESOURCE_GROUP, $SEARCH_VAL
-    )
+                    Start-Sleep -s 30
+                    $elapsedTime = new-timespan $startTime $(get-date)
+                    write-host "Elapsed:$($elapsedTime.ToString("hh\:mm\:ss"))"  
 
-    Write-Host "lab name:" $LAB_NAME 
-    Write-Host "resource group:" $RESOURCE_GROUP
-    Write-Host "JSON field:" $SEARCH_VAL
+                    $statusURLResponse = Invoke-WebRequest -URI $statusQueryGetUri
+                    $rs = $statusURLResponse.Content | ConvertFrom-Json
+                    $runtimeStatus = $rs.runtimeStatus
+                    #Write-Host "Wait Counter: " $waitCount
+                    $waitCount +=1
+                }
+                if($runtimeStatus -eq "Failed")
+                {
+                    $runtimeStatus = "Failed"
+                    Write-Host "Wait Counter: " $waitCount
+                    break
+                }
+                if($runtimeStatus -eq "Completed")
+                {
+                    $runtimeStatus = "Completed"
+                    Write-Host "Completed: " Completed
+                    break
+                }
+            }
+            $endTime = Get-Date -Format "dddd MM/dd/yyyy HH:mm K"
 
-    $parentField = ""
-    $childField = ""
-    $labData = ""
-
-    if ($SEARCH_VAL -like '*-*') {
-        $valueArray = $SEARCH_VAL -split '-'
-        $parentField = $valueArray[0]
-        $childField = $valueArray[1]
-        $labData = az lab GET --name $LAB_NAME --resource-group $RESOURCE_GROUP | ConvertFrom-Json | select -expand $parentField | Select $childField
-    }
-    else {
-        $labData = az lab GET --name $LAB_NAME --resource-group $RESOURCE_GROUP | ConvertFrom-Json | Select $SEARCH_VAL
-    }
-    if ($labData -like '*=*') {
-        $returnArray = $labData -split '='
-        $lastIndex = $returnArray[1].length - 1
-        return $returnArray[1].SubString(0, $lastIndex)
-    }
-    return ""
-}
-
-function getAnnoucementEnabled {
-    param (
-        [parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]$LAB_NAME, $RESOURCE_GROUP
-    )
-
-    getJSONFields $LAB_NAME $RESOURCE_GROUP "announcement-enabled"
-}
-
-function getRDPConnectionType {
-    param (
-        [parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]$LAB_NAME, $RESOURCE_GROUP
-    )
-
-    getJSONFields $LAB_NAME $RESOURCE_GROUP "extendedProperties-RdpConnectionType"
-}
-
-#Sanity Test
-function getLabCreationDate {
-
-    param (
-        [parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]$LAB_NAME, $RESOURCE_GROUP
-    )
-
-    $query = _query $LAB_NAME $RESOURCE_GROUP "createdDate"
-
-    # Write-Host "--------------------------------" $query
-    # $labDate = $query
-    #$labDate = az lab GET --name dtl-dd-lab-008-neu-eng --resource-group rg-az-devtestlabs-neu-local-008  --query createdDate -o tsv
-   
-    # $val = $labDate -Contains 'found'
-    if ($null -eq $query) {
-        return $False
-    }
-    else{return $True}
-}
-
-#Internal Support
-
-function internalSupport{
-
-        param (
-            [parameter(Mandatory = $true)]
-            [ValidateNotNullOrEmpty()]$LAB_NAME, $RESOURCE_GROUP
-        )
-    
-        $query = _query $LAB_NAME $RESOURCE_GROUP "support.enabled"
-
-        if ($query -eq "Disabled") {
-            return $True
+            Write-Host "EndTime:" $endTime
         }
-        else{return $False}
-
+    }
+    catch { 
+        Write-Host $_.Exception.Message
+        $output = "ERR"
+     }
+    return $runtimeStatus 
 }
-
-function  billingReference{
-    param (
-        [parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]$LAB_NAME, $RESOURCE_GROUP
-    )
-
-    $query = _query $LAB_NAME $RESOURCE_GROUP "tags.billingReference"
-    return $query
-
-}
-
-function  opEnvironment{
-    param (
-        [parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]$LAB_NAME, $RESOURCE_GROUP
-    )
-
-    $query = _query $LAB_NAME $RESOURCE_GROUP "tags.opEnvironment"
-    return $query
-
-}
-
-function  announcement{
-    param (
-        [parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]$LAB_NAME, $RESOURCE_GROUP
-    )
-
-    $query = _query $LAB_NAME $RESOURCE_GROUP "announcement.enabled"
-    return $query
-
-}
-
-
-function  labStorageType{
-    param (
-        [parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]$LAB_NAME, $RESOURCE_GROUP
-    )
-
-    $query = _query $LAB_NAME $RESOURCE_GROUP "labStorageType"
-    return $query
-
-}
-
-function rdpConnectionType{
-
-    param (
-        [parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]$LAB_NAME, $RESOURCE_GROUP
-    )
-
-    $query = _query $LAB_NAME $RESOURCE_GROUP "extendedProperties.RdpConnectionType"
-    return $query
-}
-
-function cmdbReference{
-
-    param (
-        [parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]$LAB_NAME, $RESOURCE_GROUP
-    )
-
-    $query = _query $LAB_NAME $RESOURCE_GROUP "tags.cmdbReference"
-    return $query
-}
-
-function vaultName{
-
-    param (
-        [parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]$LAB_NAME, $RESOURCE_GROUP
-    )
-
-    $query = _query $LAB_NAME $RESOURCE_GROUP "vaultName"
-
-    
-    return $query
-
-
-}
-#az lab GET --name dtl-dd-lab-008-neu-eng --resource-group rg-az-devtestlabs-neu-local-008 --query vaultName -o tsv
-#az lab GET --name dtl-dd-lab-008-neu-eng --resource-group rg-az-devtestlabs-neu-local-008 --query support.enabled -o tsv  
