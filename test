@@ -1,308 +1,207 @@
+#Domain join
+
+#Global 
+
 function _query{
 
     param (
         [parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]$RESOURCE_GROUP, $VM_NAME, $QUERY
+        [ValidateNotNullOrEmpty()]$LAB_NAME, $RESOURCE_GROUP, $QUERY
     )
 
-    $query = az vm show -g $RESOURCE_GROUP -n $VM_NAME --query $QUERY -o tsv
-
-    #$query = az lab GET --name $LAB_NAME --resource-group $RESOURCE_GROUP  --query $QUERY -o tsv
+    $query = az lab GET --name $LAB_NAME --resource-group $RESOURCE_GROUP  --query $QUERY -o tsv
     return $query
 
 }
 
-function getAll() {
-
-    $fileName = (get-Date).ToString("dd-MM-yyyy-hh-mm-ss")
-    $vmData = az vm list | ConvertFrom-JSON
-    #$vmDataList | select tags | Select-Object -Property * | Format-List
-    
-    $vmDataList = $vmData | select name,  resourceGroup, id, licenseType, tags, hardwareProfile, osProfile, location
-    # $vmData | select * |  Format-List | Export-Csv -Path  $fileName".csv"
-    $vmDataList | select * | Out-File  $fileName".csv"
-
-    return $vmDataList
-
-}
-
-function getRG{
-
-       param (
-        [parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()] $VM_NAME
-    )
-    $vmDataList = getAll
-    $resourceGroup = "Not Found"
-     foreach ($vm in  $vmDataList) {
-         if ($vm.name.trim() -eq $VM_NAME.trim()) {
-            $resourceGroup = $vm.resourceGroup
-         }
-    }
-    return $resourceGroup
-}
-
-function getVMName{
-       param (
-        [parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()] $RESOURCEID, $VMPREFIX
-    )
-    $VM_NAME = "NA"
-    # az account set -s ba-ise-ddg01-eu-appdev
-    # az account show
-    try{
-        $vmData = az vm list -g $RESOURCEID | ConvertFrom-JSON
-        # Write-Host $vmData 
-        $vmDataList = $vmData | select name
-        # Write-Host $VMPREFIX.ToUpper()
-        foreach ($vm in  $vmDataList) {
-            # Write-Host $vm
-            if ($vm.name.trim() -match $VMPREFIX.ToUpper())
-            {
-                $VM_NAME = $vm.name
-            }
-        }
-    }
-        catch { 
-            Write-Host $_.Exception.Message
-            
-         }
-    return $VM_NAME
-
-}
-
-function getSubscription{
-
-       param (
-        [parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()] $VM_NAME
-    )
-    $vmDataList = getAll
-    $subscription = "Not Found"
-     foreach ($vm in  $vmDataList) {
-         if ($vm.name.trim() -eq $VM_NAME.trim()) {
-             $subs = ($vm.id).ToString().Split("/")
-             $subscription = $subs[2]
-         }
-    }
-    return  $subscription
-}
-
-function startVM{
-
-      param (
-        [parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]$RESOURCE_GROUP, $VM_NAME
-    )
-    az vm start -g $RESOURCE_GROUP -n $VM_NAME
-    Start-Sleep -Second 30
-
-}
-function getLicenseType {
+function getLabDetails {
     param (
         [parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]$RESOURCE_GROUP, $VM_NAME
+        [ValidateNotNullOrEmpty()]$LAB_NAME, $RESOURCE_GROUP, $SEARCH_VAL
     )
 
-    $query = _query $RESOURCE_GROUP $VM_NAME "licenseType"
+    $labData = ""
+    $fileName = "Lab_" + (get-Date).ToString("dd-MM-yyyy-hh-mm-ss")
 
-    return $query
-    # $vmDataList = getAll
-    # $licenseType = ""
-    # $vmData =  az vm list | ConvertFrom-JSON
-    # $vmDataList = $vmData | select name, licenseType
-    # $vmData | select name, licenseType |   Out-File "vnlist.csv"
+    try {
+        $labData = az lab GET --name $LAB_NAME --resource-group $RESOURCE_GROUP | ConvertFrom-JSON
+        $labData | select * |  Export-Csv -Path  $fileName".csv"
+      
 
-    # return $vmDataList
+    }
+    catch {  }
 
-    #Write-Host "VM Name " + $vmDataList 
-    # $vmNameList = $vmDataList | select name
-    # $vmState = $False
-    # $vmFound = ""
-    # Convertto-Json $vmData
-  
-    #$osDisk = (Get-Content 'vmlistv1.json' | ConvertFrom-Json).osDisk
+    return $labData
+}
 
-    #$vmNames= (Get-Content 'vmlistv1.json' | ConvertFrom-Json).name
+function getJSONFields {
+    param (
+        [parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]$LAB_NAME, $RESOURCE_GROUP, $SEARCH_VAL
+    )
 
-    #Write-Host  $osDisk 
-    # $count = 1
-    # foreach ($vm in  $vmDataList) {
-       
-    #     # Write-Host "One VM" + $vm.trim()
-    #     if ($vm.name.trim() -like $VM_NAME.trim()) {
-    #         $licenseType = $vm.licenseType
-    #         #Write-Host $licenseType
-    #         if ($licenseType) {
-    #             $licenseType = $vm.licenseType.trim()
-    #             #Write-Host "One VM" $vm.licenseType.trim()
-    #             Break 
-    #         }
-    #         else { $licenseType = "No License" }
-    #     }
-    # }
+    Write-Host "lab name:" $LAB_NAME 
+    Write-Host "resource group:" $RESOURCE_GROUP
+    Write-Host "JSON field:" $SEARCH_VAL
+
+    $parentField = ""
+    $childField = ""
+    $labData = ""
+
+    if ($SEARCH_VAL -like '*-*') {
+        $valueArray = $SEARCH_VAL -split '-'
+        $parentField = $valueArray[0]
+        $childField = $valueArray[1]
+        $labData = az lab GET --name $LAB_NAME --resource-group $RESOURCE_GROUP | ConvertFrom-Json | select -expand $parentField | Select $childField
+    }
+    else {
+        $labData = az lab GET --name $LAB_NAME --resource-group $RESOURCE_GROUP | ConvertFrom-Json | Select $SEARCH_VAL
+    }
+    if ($labData -like '*=*') {
+        $returnArray = $labData -split '='
+        $lastIndex = $returnArray[1].length - 1
+        return $returnArray[1].SubString(0, $lastIndex)
+    }
+    return ""
+}
+
+function getAnnoucementEnabled {
+    param (
+        [parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]$LAB_NAME, $RESOURCE_GROUP
+    )
+
+    getJSONFields $LAB_NAME $RESOURCE_GROUP "announcement-enabled"
+}
+
+function getRDPConnectionType {
+    param (
+        [parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]$LAB_NAME, $RESOURCE_GROUP
+    )
+
+    getJSONFields $LAB_NAME $RESOURCE_GROUP "extendedProperties-RdpConnectionType"
+}
+
+#Sanity Test
+function getLabCreationDate {
+
+    param (
+        [parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]$LAB_NAME, $RESOURCE_GROUP
+    )
+
+    $query = _query $LAB_NAME $RESOURCE_GROUP "createdDate"
+
+    # Write-Host "--------------------------------" $query
+    # $labDate = $query
+    #$labDate = az lab GET --name dtl-dd-lab-008-neu-eng --resource-group rg-az-devtestlabs-neu-local-008  --query createdDate -o tsv
    
-    # return  $licenseType
-}
-
-
-function vmStatus{
-    param (
-        [parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]$RESOURCE_GROUP, $VM_NAME
-    )
-    $query = az vm get-instance-view --name $VM_NAME --resource-group $RESOURCE_GROUP --query instanceView.statuses[1] -o tsv
-    #_query $RESOURCE_GROUP $VM_NAME "instanceView.statuses[1]"
-
-    return $query
-
-    #az vm get-instance-view --name santuroy001 --resource-group RG-AZ-DEVTESTLABS-NEU-LOCAL-001 --query instanceView.statuses[1] -o tsv
-}
-
-function vmSize {
-
-    param (
-        [parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]$RESOURCE_GROUP, $VM_NAME
-    )
-
-    $query = az vm get-instance-view --name $VM_NAME --resource-group $RESOURCE_GROUP --query hardwareProfile.vmSize -o tsv
-
-    return $query
-
-}
-
-function localAdmin {
-
-    param (
-        [parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]$RESOURCE_GROUP, $VM_NAME
-    )
-    $query =  az vm show -g $RESOURCE_GROUP -n $VM_NAME --query osProfile -o tsv
-   # $query = az vm get-instance-view --name $VM_NAME --resource-group $RESOURCE_GROUP --query hardwareProfile.vmSize -o tsv
-    return $query
-}
-
-function vmRunCommand{
-
-    param (
-        [parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]$RESOURCE_GROUP, $VM_NAME, $CMD
-    )
-
-    $query = az vm run-command invoke --command-id RunPowerShellScript --name $VM_NAME -g $RESOURCE_GROUP --scripts $CMD             
-    $output =  $query[3..3]
-
-    return $output
-}
-
-function vmExists(){
-
-    param (
-        [parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]$RESOURCE_GROUP, $VM_NAME
-    )
-     $vm = az vm get-instance-view -g $RESOURCE_GROUP -n $VM_NAME --query vmId -o tsv
-     if($null -eq $vm){
-         return $False
-     }else{return $True}
-}
-
-function rgExists(){
-
-    param (
-        [parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]$RESOURCE_GROUP
-    )
-
-     $rg = az group exists --name $RESOURCE_GROUP
-    
-     return $rg
-}
-
-
-function vmLocation(){
-
-    param (
-        [parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]$RESOURCE_GROUP, $VM_NAME
-    )
-
-    $location =  az vm get-instance-view -g $RESOURCE_GROUP -n $VM_NAME --query location -o tsv
-    
-    return $location
-}
-
-
-#Domain join using tags
-function getDomainJoinTags {
-    param (
-        [parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]$RESOURCE_GROUP, $VM_NAME
-    )
-    $query = _query $RESOURCE_GROUP $VM_NAME "tags.domainjoin"
-    return $query
-
-}
-#------Domain Join Extension:
-function getDomainJoinExt {
-    param (
-        [parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]$RESOURCE_GROUP, $VM_NAME
-    )
-    #  $ext -match 'join'
-    $domainExt = $False
-     $ext = az vm get-instance-view -g $RESOURCE_GROUP -n $VM_NAME --query instanceView.extensions -o tsv
-     foreach ($name in $ext) 
-     {
-         if ($name.toString() -match "join") 
-         {
-           $domainExt = $True
-         }
-     }
-     return $domainExt
-}
-    # $domainExt = az vm get-instance-view -g $RESOURCE_GROUP -n $VM_NAME --query instanceView.extensions -o tsv
-    
-#getExpDate
-
-function getExpDate{
-
-    param (
-        [parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]$SUBSCRIPTION_ID, $RESOURCEID, $LAB_ID, $VM_NAME
-    )
-    $vmExpDate = ""
-
-    $labId = "/subscriptions/"+$SUBSCRIPTION_ID+"/resourceGroups/"+$RESOURCEID+"/providers/Microsoft.DevTestLab/labs/"+$LAB_ID+"/virtualMachines/"+$VM_NAME
-
-    Write-Host  $labId 
-    $expDate = az resource show --ids $labId --query properties.expirationDate -o tsv
-    if($null -eq $expDate){
-        return $vmExpDate
-    }else{
-        
-        return $expDate
+    # $val = $labDate -Contains 'found'
+    if ($null -eq $query) {
+        return $False
     }
+    else{return $True}
 }
 
-function getChoco(){
+#Internal Support
+
+function internalSupport{
+
+        param (
+            [parameter(Mandatory = $true)]
+            [ValidateNotNullOrEmpty()]$LAB_NAME, $RESOURCE_GROUP
+        )
+    
+        $query = _query $LAB_NAME $RESOURCE_GROUP "support.enabled"
+
+        if ($query -eq "Disabled") {
+            return $True
+        }
+        else{return $False}
+
+}
+
+function  billingReference{
+    param (
+        [parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]$LAB_NAME, $RESOURCE_GROUP
+    )
+
+    $query = _query $LAB_NAME $RESOURCE_GROUP "tags.billingReference"
+    return $query
+
+}
+
+function  opEnvironment{
+    param (
+        [parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]$LAB_NAME, $RESOURCE_GROUP
+    )
+
+    $query = _query $LAB_NAME $RESOURCE_GROUP "tags.opEnvironment"
+    return $query
+
+}
+
+function  announcement{
+    param (
+        [parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]$LAB_NAME, $RESOURCE_GROUP
+    )
+
+    $query = _query $LAB_NAME $RESOURCE_GROUP "announcement.enabled"
+    return $query
+
+}
+
+
+function  labStorageType{
+    param (
+        [parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]$LAB_NAME, $RESOURCE_GROUP
+    )
+
+    $query = _query $LAB_NAME $RESOURCE_GROUP "labStorageType"
+    return $query
+
+}
+
+function rdpConnectionType{
 
     param (
         [parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]$PKG_NAME
+        [ValidateNotNullOrEmpty()]$LAB_NAME, $RESOURCE_GROUP
     )
 
-#    $chocoList = Get-ChildItem 'C:\Program Files\choco'  | Select-Object FullName 
-     $chocoList = Get-ChildItem 'C:\Program Files\choco'  -Filter $PKG_NAME | Select-Object FullName
-  
+    $query = _query $LAB_NAME $RESOURCE_GROUP "extendedProperties.RdpConnectionType"
+    return $query
+}
 
-     if($null -eq $chocoList){
-        return $false
-    }else{
-        return $true
-    }
+function cmdbReference{
+
+    param (
+        [parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]$LAB_NAME, $RESOURCE_GROUP
+    )
+
+    $query = _query $LAB_NAME $RESOURCE_GROUP "tags.cmdbReference"
+    return $query
+}
+
+function vaultName{
+
+    param (
+        [parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]$LAB_NAME, $RESOURCE_GROUP
+    )
+
+    $query = _query $LAB_NAME $RESOURCE_GROUP "vaultName"
+
+    
+    return $query
 
 
 }
-
+#az lab GET --name dtl-dd-lab-008-neu-eng --resource-group rg-az-devtestlabs-neu-local-008 --query vaultName -o tsv
+#az lab GET --name dtl-dd-lab-008-neu-eng --resource-group rg-az-devtestlabs-neu-local-008 --query support.enabled -o tsv  
