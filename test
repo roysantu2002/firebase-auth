@@ -1,1 +1,543 @@
 
+$tc_100_result = ""
+function verifyRegistryFolder {
+    param (
+
+        [parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]$Path
+    )
+    return Test-Path -Path $Path
+}
+function Test-RegistryValue {
+
+    param (
+
+        [parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]$Path,
+
+        [parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]$Value
+    )
+
+    try {
+
+        $c = 0
+        Get-Item -Path $Path | Select-Object -ExpandProperty property | % { if ($_ -match $Value) { $c = 1 ; return $true } }
+        if ($c -eq 0) { return $false }
+    }
+
+    catch {
+
+        return $false
+
+    }
+
+}
+
+function PathExists {
+    param(
+        [parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]$Path
+    )
+    return Test-Path -Path $Path
+}
+
+function VerifyEnvironmentVariable {
+    param (
+
+        [parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]$Name,
+
+        [parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]$Value
+    )
+
+    try {
+        $c = 0;
+        $count = 0;
+        #Verify if the variable exists
+        $count = (Get-ChildItem -Path "ENV:\$Name").Count
+        if ($count -eq 0) { return $false }
+
+        #If exists, verify Value
+        (Get-ChildItem -Path "ENV:\$Name").Value | % { if ($_ -eq $Value) { $c = 1 ; return $true } }
+        if ($c -eq 0) { return $false }
+     
+    }
+    catch {
+        Write-Output "Inside Catch"
+        return $false
+    }
+}
+
+function ScheduledTaskExists {
+    param(
+        [parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]$TaskName
+    )
+    $taskDetails = schtasks | findstr /C:"$TaskName" /B
+    #Write-Host $taskDetails
+    if ($taskDetails -ne $null) { return $true }
+    return $false
+}
+
+function ServiceExists {
+    param(
+        [parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]$ServiceName,
+		
+        [parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]$Status
+    )
+    $servicequery = Get-Service -name "$ServiceName" | Where-Object { $_.Status -eq "$Status" }
+    #Write-Host $servicequery
+    if ($servicequery -ne $null) { return $true }
+    return $false
+}
+
+Describe "Verify Tasks performed by SetEnv.ps1" {
+
+    $testCases = Get-Content -Raw -Path ".\SetEnvTestCases.json" | ConvertFrom-JSON
+    $ENV_NAME = $env:UBS_ENV
+    #$ENV_NAME = "ENG"
+    $ubs_path = "C:\ubs"
+    $ubs_logs_path = "C:\ProgramData\UBS\Logs"
+    $ubs_msiexec_path = "C:\ProgramData\UBS\Logs\msiexec"
+    $software_reg_path = "HKLM:\SOFTWARE\UBS\"
+    $machineConfigData_path = "HKLM:\SOFTWARE\UBS\MachineConfigData"
+    $data_path = "HKLM:\SOFTWARE\UBS\MachineConfigData\data"
+    $build_path = "HKLM:\SOFTWARE\UBS\Build"
+    $transmitPath = "HKLM:\SOFTWARE\Transmit"
+    $default = "\AuthServerConnections\default"
+    $branding = "\TransmitPolicyClient\Branding"
+    $branding_path = "C:\Windows\System32\TransmitBranding"
+    $transmit_path = "HKLM:\SOFTWARE\Transmit"
+    $tc_100_result = ""
+    $fslogix_profiles_path = "HKLM:\Software\FSLogix\Profiles"
+    $rdp_tcp_reg_path = "HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp"
+    $chrome_reg_path = "HKLM:\SOFTWARE\Clients\StartMenuInternet\Google Chrome\shell\open\command"
+	$terminal_services_path = "HKLM:\Software\Policies\Microsoft\Windows` NT\Terminal` Services\"
+	$proxy_pac_path = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Internet Settings"
+	
+    if ($ENV_NAME.Trim() -eq "PROD") {
+        $transmitUrl = "https://transmit.ubs.net"
+		$proxy_pac_url = "http://proxypac.ubs.net"
+		
+    }
+    elseif ($ENV_NAME.Trim() -eq "ENG") {
+        $transmitUrl = "https://transmit.ubsdev.net"
+		$proxy_pac_url = "http://proxypac.ubseng.net:4713/files/wdd-proxy-eng.pac"
+    }
+
+    foreach ($test in $testCases) {
+        
+        #Write-Host $test.enabled
+        switch ($test.id) {
+        
+            "01" {
+
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription) {
+                        $testpath = PathExists -Path $ubs_path
+                        # Write-Host $testpath
+                        $testpath | should be $True
+                    }
+                }
+            }
+            "02" {
+
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription) {
+                        $testpath = PathExists -Path $ubs_logs_path
+                        #Write-Host $testpath
+                        $testpath | should be $true
+                    }
+                }
+            
+            }
+
+            "03" {
+
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription) {
+                        $testpath = PathExists -Path $ubs_msiexec_path
+                        #Write-Host $testpath
+                        $testpath | should be $true
+                    }
+                }
+            }
+            "04" {
+
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription) {
+                        $result = Test-Path $software_reg_path 
+                        $result | should be $true
+                    }
+                }
+            }
+            "05" {
+
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription) {
+                        $result = Test-Path $machineConfigData_path 
+                        $result | should be $true
+                    }
+                }
+            
+            }
+
+            "06" {
+
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription) {
+                        $result = Test-Path $data_path
+                        $result | should be $true
+                    }
+                }
+            
+            }
+
+            "07" {
+
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription) {
+                        $result = Test-Path $build_path
+                        $result | should be $true
+                    }
+                }
+            
+            }
+
+            "080" {
+
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription) {
+                        $result = Test-Path $transmit_path
+                        $result | should be $true
+                    }
+                }
+            
+            }
+
+            "090" {
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription) {
+                        $tansmit = verifyRegistryFolder -Path $transmitPath
+                        #Write-Host $transmitPath$default
+        
+                        if ( $tansmit -eq $True) {
+                            $AuthServerUrl = Test-RegistryValue -Path $transmitPath$default -Value 'AuthServerUrl'
+                            #Write-Host $AuthServerUrl
+                            if ($AuthServerUrl -eq $True) {
+                                $result = (Get-ItemProperty -Path HKLM:\SOFTWARE\Transmit\AuthServerConnections\default -Name AuthServerUrl).AuthServerUrl
+                                #Write-Host $result
+                                #Write-Host $ENV_NAME
+                                #Write-Host $transmitUrl
+                                $result | should be $transmitUrl
+                            }
+                        }
+                    }
+                }
+            }
+
+            "091" {
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription) {
+                        $tansmit = verifyRegistryFolder -Path $transmitPath
+                        #Write-Host $transmitPath$branding
+        
+                        if ( $tansmit -eq $True) {
+                            $BrandingJson = Test-RegistryValue -Path $transmitPath$branding -Value 'Branding'
+                            #Write-Host $AuthServerUrl
+                            if ($BrandingJson -eq $True) {
+                                $result = (Get-ItemProperty -Path HKLM:\SOFTWARE\Transmit\AuthServerConnections\default -Name Stylesheet).Stylesheet
+                                #Write-Host $result
+                                $result | should be 'TransmitStyles.json'
+                            }
+                        }
+                    }
+                }
+            }
+
+            "100" {
+
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription) {
+                        $result = Test-Path $branding_path
+                        $tc_100_result = $result
+                        $result | should be $true
+                    }
+                }
+            }
+
+            "101" {
+
+                if ($test.enabled -eq $True) {
+                 
+                    # if$(tc_100_result -eq $True){
+                    It ($test.tcDescription) {
+                        $result = (Get-ChildItem  -Path C:\Windows\System32\TransmitBranding | Measure-Object).Count
+                        $result | should be 13
+                  
+                        # }
+                    }
+                }
+            }
+			
+            "110" {
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription) {
+                        $tansmit = verifyRegistryFolder -Path $fslogix_profiles_path
+                        #Write-Host $fslogix_profiles_path
+        
+                        if ( $tansmit -eq $True) {
+                            $ItemPropertyExists = Test-RegistryValue -Path $fslogix_profiles_path -Value 'Enabled'
+                            if ($ItemPropertyExists -eq $True) {
+                                $result = (Get-ItemProperty -Path HKLM:\Software\FSLogix\Profiles -Name Enabled).Enabled
+                                #Write-Host $result
+                                $result | should be '1'
+                            }
+                        }
+                    }
+                }
+            }
+			
+            "111" {
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription) {
+                        $tansmit = verifyRegistryFolder -Path $fslogix_profiles_path
+        
+                        if ( $tansmit -eq $True) {
+                            $ItemPropertyExists = Test-RegistryValue -Path $fslogix_profiles_path -Value 'SizeInMBs'
+                            if ($ItemPropertyExists -eq $True) {
+                                $result = (Get-ItemProperty -Path HKLM:\Software\FSLogix\Profiles -Name SizeInMBs).SizeInMBs
+                                #Write-Host $result
+                                $result | should be '120000'
+                            }
+                        }
+                    }
+                }
+            }
+			
+            "112" {
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription) {
+                        $tansmit = verifyRegistryFolder -Path $fslogix_profiles_path
+        
+                        if ( $tansmit -eq $True) {
+                            $ItemPropertyExists = Test-RegistryValue -Path $fslogix_profiles_path -Value 'VolumeType'
+                            if ($ItemPropertyExists -eq $True) {
+                                $result = (Get-ItemProperty -Path HKLM:\Software\FSLogix\Profiles -Name VolumeType).VolumeType
+                                #Write-Host $result
+                                $result | should be 'vhdx'
+                            }
+                        }
+                    }
+                }
+            }
+			
+            "113" {
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription) {
+                        $tansmit = verifyRegistryFolder -Path $fslogix_profiles_path
+        
+                        if ( $tansmit -eq $True) {
+                            $ItemPropertyExists = Test-RegistryValue -Path $fslogix_profiles_path -Value 'SIDDirNameMatch'
+                            if ($ItemPropertyExists -eq $True) {
+                                $result = (Get-ItemProperty -Path HKLM:\Software\FSLogix\Profiles -Name SIDDirNameMatch).SIDDirNameMatch
+                                #Write-Host $result
+                                $result | should be '%username%_%sid%'
+                            }
+                        }
+                    }
+                }
+            }
+			
+            "114" {
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription) {
+                        $tansmit = verifyRegistryFolder -Path $fslogix_profiles_path
+        
+                        if ( $tansmit -eq $True) {
+                            $ItemPropertyExists = Test-RegistryValue -Path $fslogix_profiles_path -Value 'SIDDirNamePattern'
+                            if ($ItemPropertyExists -eq $True) {
+                                $result = (Get-ItemProperty -Path HKLM:\Software\FSLogix\Profiles -Name SIDDirNamePattern).SIDDirNamePattern
+                                #Write-Host $result
+                                $result | should be '%username%_%sid%'
+                            }
+                        }
+                    }
+                }
+            }
+			
+            "115" {
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription) {
+                        $tansmit = verifyRegistryFolder -Path $fslogix_profiles_path
+        
+                        if ( $tansmit -eq $True) {
+                            $ItemPropertyExists = Test-RegistryValue -Path $fslogix_profiles_path -Value 'PreventLoginWithFailure'
+                            if ($ItemPropertyExists -eq $True) {
+                                $result = (Get-ItemProperty -Path HKLM:\Software\FSLogix\Profiles -Name PreventLoginWithFailure).PreventLoginWithFailure
+                                #Write-Host $result
+                                $result | should be '1'
+                            }
+                        }
+                    }
+                }
+            }
+			
+            "120" {
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription) {
+                        $result = ScheduledTaskExists -TaskName "BGInfo"
+                        #Write-Host $result
+                        $result | should be $true
+                    }
+                }
+            }
+			
+            "121" {
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription) {
+                        $result = ScheduledTaskExists -TaskName "UserConfig"
+                        #Write-Host $result
+                        $result | should be $true
+                    }
+                }
+            }
+			
+            "122" {
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription) {
+                        $result = ScheduledTaskExists -TaskName "Dev folder redirection - userinfo"
+                        #Write-Host $result
+                        $result | should be $true
+                    }
+                }
+            }
+			
+            "123" {
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription) {
+                        $result = ScheduledTaskExists -TaskName "Dev folder redirection - redirect"
+                        #Write-Host $result
+                        $result | should be $true
+                    }
+                }
+            }
+			
+            "124" {
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription) {
+                        $result = ScheduledTaskExists -TaskName "OnBoard Defender"
+                        #Write-Host $result
+                        $result | should be $true
+                    }
+                }
+            }
+			
+            "125" {
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription) {
+                        #added space after Clean to skip finding CleanupTemporaryState task
+                        $result = ScheduledTaskExists -TaskName "Clean "
+                        #Write-Host $result
+                        $result | should be $true
+                    }
+                }
+            }
+			
+            "130" {
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription) {
+                        $reg_path = verifyRegistryFolder -Path $rdp_tcp_reg_path
+        
+                        if ( $reg_path -eq $True) {
+                            $ItemPropertyExists = Test-RegistryValue -Path $rdp_tcp_reg_path -Value 'SecurityLayer'
+                            if ($ItemPropertyExists -eq $True) {
+                                $result = (Get-ItemProperty -Path $rdp_tcp_reg_path -Name SecurityLayer).SecurityLayer
+                                #Write-Host $result
+                                $result | should be '0'
+                            }
+						
+                            $ItemPropertyExists = Test-RegistryValue -Path $rdp_tcp_reg_path -Value 'UserAuthentication'
+                            if ($ItemPropertyExists -eq $True) {
+                                $result = (Get-ItemProperty -Path $rdp_tcp_reg_path -Name UserAuthentication).UserAuthentication
+                                #Write-Host $result
+                                $result | should be '0'
+                            }
+						
+                            $ItemPropertyExists = Test-RegistryValue -Path $rdp_tcp_reg_path -Value 'fAllowSecProtocolNegotiation'
+                            if ($ItemPropertyExists -eq $True) {
+                                $result = (Get-ItemProperty -Path $rdp_tcp_reg_path -Name fAllowSecProtocolNegotiation).fAllowSecProtocolNegotiation
+                                #Write-Host $result
+                                $result | should be '0'
+                            }
+                        }
+                    }
+                }
+            }
+			
+            "140" {
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription) {
+                        $chrome_path = verifyRegistryFolder -Path $chrome_reg_path
+        
+                        if ( $chrome_path -eq $True) {
+                            $ItemPropertyExists = Test-RegistryValue -Path $chrome_reg_path -Value '(Default)'
+                            #Write-Host $ItemPropertyExists
+                            $ItemPropertyExists | should be $true
+                            #$result = (Get-ItemProperty -literalpath $chrome_reg_path -Name '(Default)').'(Default)'
+                        }
+                    }
+                }
+            }
+			
+            "150" {
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription) {
+                        $result = ServiceExists -ServiceName "Update Orchestrator Service" -Status "Running"
+                        #Write-Host $result
+                        $result | should be $true
+                    }
+                }
+            }
+			
+			"151" {
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription) {
+                        $regPath = verifyRegistryFolder -Path $terminal_services_path
+        
+                        if ( $regPath -eq $True) {
+                            $ItemPropertyExists = Test-RegistryValue -Path $terminal_services_path -Value 'ImageQuality'
+                            if ($ItemPropertyExists -eq $True) {
+                                $result = (Get-ItemProperty -Path $terminal_services_path -Name ImageQuality).ImageQuality
+                                #Write-Host $result
+                                $result | should be '1'
+                            }
+                        }
+                    }
+                }
+            }
+			
+			"152" {
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription) {
+                        $regPath = verifyRegistryFolder -Path $proxy_pac_path
+        
+                        if ( $regPath -eq $True) {
+                            $ItemPropertyExists = Test-RegistryValue -Path $proxy_pac_path -Value 'AutoConfigURL'
+                            if ($ItemPropertyExists -eq $True) {
+                                $result = (Get-ItemProperty -Path $proxy_pac_path -Name AutoConfigURL).AutoConfigURL
+                                #Write-Host $result
+                                $result | should be $proxy_pac_url
+                            }
+                        }
+                    }
+                }
+            }
+
+        }
+    }
+}
