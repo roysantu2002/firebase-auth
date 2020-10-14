@@ -1,1 +1,764 @@
 
+trigger: none
+
+pool: ADO-ISE-DEV-DESKTOP-WIN
+
+variables:
+- name: ManagedImagePrefix
+  value: 'DTL-Win10-19h-ent' # DTL-Win10-19h-ent
+  readonly: true
+- name: MajorVersion
+  value: 1 
+  readonly: true
+- name: MinorVersion
+  value: 0 
+  readonly: true
+- name: PatchVersion
+  value: $[counter(variables['build.reason'], 50)] 
+  readonly: true
+- name: ImageVersion
+  value: $[format('{0}.{1}.{2}', variables['MajorVersion'], variables['MinorVersion'], variables['PatchVersion'])]
+- name: ManagedImageName  
+  value: $[format('{0}-{1}.{2}.{3}', variables['ManagedImagePrefix'], variables['MajorVersion'], variables['MinorVersion'], variables['PatchVersion'])]
+- name: PackerCommandOptions
+  value: -on-error=ask
+- name: system.debug
+  value: true
+
+stages:
+- stage: ENG_BUILD
+  variables:
+  - group: DevDesktop-Packer-Build-ENG 
+  jobs:
+  - job: ENG_BUILD_IMAGE
+    timeoutInMinutes: 360
+    steps:
+    - checkout: self
+    - task: ArchiveFiles@2
+      displayName: 'Archive TransmitForWinLogon_1.04'
+      inputs:
+        rootFolderOrFile: '$(build.sourcesdirectory)/MultiStage/TransmitForWinLogon_1.04'
+        includeRootFolder: true
+        archiveType: 'zip'
+        archiveFile: '$(build.sourcesdirectory)/MultiStage/TransmitForWinLogon_1_04.zip'
+        replaceExistingArchive: true
+    - task: PackerTool@0
+      displayName: 'Use Packer 1.5.2'
+      inputs:
+        version: '1.5.2'
+    - task: Packer@1
+      enabled: true
+      displayName: 'Build immutable image'
+      name: buildImmutableImage
+      inputs:
+        connectedServiceType: 'azure'
+        azureSubscription: 'arm-packer-build-eng'
+        templatePath: '$(build.sourcesdirectory)/MultiStage/PackerFiles/$(JsonFileName)'
+        command: 'build'
+        variables: |
+          environment=$(environment)          
+          managed_image_gallery_name=$(managed_image_gallery_name)
+          managed_image_gallery_image_name=$(ManagedImagePrefix)
+          managed_image_gallery_image_version=$(ImageVersion)
+          managed_image_resource_group_name=$(managed_image_resource_group_name)
+          managed_image_replication_regions=$(managed_image_replication_regions)
+          build_resource_group_name=$(build_resource_group_name)
+          build_managed_image_name=$(ManagedImageName)
+          build_virtual_network_name=$(build_virtual_network_name)
+          build_virtual_network_subnet_name=$(build_virtual_network_subnet_name)
+          build_virtual_network_resource_group_name=$(build_virtual_network_resource_group_name)
+        options: $(PackerCommandOptions)
+      env:
+        PACKER_LOG_PATH: $(build.artifactstagingdirectory)\packer.log
+        PACKER_LOG: 10
+    - task: PowerShell@2
+      displayName: 'Show agent directories content'
+      inputs:
+        targetType: 'inline'
+        script: |
+          Write-Output "### Current Directory ###"
+          Get-Location
+          Write-Output ""
+          Write-Output "###"
+          Write-Output ""
+          
+          Write-Output "### Directory Agent.BuildDirectory ###"
+          Write-Output "$(Agent.BuildDirectory)"
+          Write-Output ""
+          Get-ChildItem -Path $(Pipeline.Workspace) -Recurse | Format-Table
+          Write-Output ""
+          Write-Output "###"
+          Write-Output ""
+          
+          Write-Output "### XML Contents ###"
+          Get-Content $(Build.SourcesDirectory)\TestResults.xml
+          Write-Output ""
+        
+    - task: PublishTestResults@2
+      inputs:
+        testResultsFormat: 'NUnit'
+        testResultsFiles: '**/TestResults.xml'
+      condition: succeededOrFailed()     
+    - task: CmdLine@2
+      displayName: 'Upload Packer.log'
+      condition: always()
+      continueOnError: true
+      inputs:
+        script: |
+          echo ##vso[build.uploadlog]$(build.artifactstagingdirectory)\packer.log
+- stage: ENG_TEST
+  dependsOn: ENG_BUILD 
+  variables:
+  - group: DevDesktop-Packer-Build-ENG 
+  jobs:
+  - deployment: ENG_DEPLOY_IMAGE
+    timeoutInMinutes: 360
+    environment: ENG
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - checkout: self
+          - task: AzureDevTestLabsCreateVM@3            
+            displayName: Create DTL VM
+            enabled: true
+            inputs:
+              azureSubscription: 'arm-packer-build-eng'
+              LabId: '$(dtl_test_lab_resource_id)'
+              VirtualMachineName: '$(System.DefinitionId)-$(Build.BuildId)-$(System.JobAttempt)'
+              TemplateFile: '$(Build.SourcesDirectory)\MultiStage\FunctionalTests\dtl-lab-test-vm.json'
+              ParameterOverrides: '-sharedImageVersion ''$(ImageVersion)'''
+              FailOnArtifactError: true
+              WaitMinutesForApplyArtifacts: 30
+              RetryOnFailure: true
+              DeleteFailedLabVMBeforeRetry: true
+              DeleteFailedDeploymentBeforeRetry: true
+          - task: AzureCLI@2
+            displayName: Wait for Domain Join Extension
+            inputs:
+              azureSubscription: 'arm-packer-build-eng'
+              scriptType: 'ps'
+              scriptLocation: 'inlineScript'
+              inlineScript: |              
+                az vm extension wait --created --name joindomain --resource-group $env:ADO_AGENT_RESOURCE_GROUP --vm-name $env:ADO_AGENT_NAME
+            env:
+             ADO_AGENT_NAME: $(System.DefinitionId)-$(Build.BuildId)-$(System.JobAttempt)
+             ADO_AGENT_RESOURCE_GROUP: $(dtl_test_lab_resource_group)
+          - task: AzureCLI@2
+            displayName: Install Artifacts Post Domain Join                        
+            inputs:
+              azureSubscription: 'arm-packer-build-eng'
+              scriptType: 'ps'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                Add-Type -AssemblyName System.Web
+                $json = @"
+                  [
+                    {
+                    "artifactId": "/artifactSources/dtl-artifacts/artifacts/windows-openjdk-jre-8",
+                    "parameters": []
+                    },
+                    {
+                    "artifactId": "/artifactSources/dtl-artifacts/artifacts/windows-nodejs-12",
+                    "parameters": []
+                    },
+                    {
+                    "artifactId": "/artifactSources/dtl-artifacts/artifacts/windows-winrm",
+                    "parameters": []
+                    },
+                    {
+                    "artifactId": "/artifactSources/dtl-artifacts/artifacts/windows-vsts-test-user",
+                    "parameters": [
+                        {
+                            "name": "windowsLogonAccount",
+                            "value": "$([System.Web.HttpUtility]::JavaScriptStringEncode($env:ado_agent_windows_logon_account))"
+                        }
+                    ]
+                    },
+                    {
+                    "artifactId": "/artifactSources/dtl-artifacts/artifacts/windows-vsts-agent",
+                    "parameters": [
+                        {
+                            "name": "vstsAccount",
+                            "value": "$($env:ado_organization)"
+                        },
+                        {
+                            "name": "personalAccessToken",
+                            "value": "$($env:System_AccessToken)"
+                        },
+                        {
+                            "name": "poolName",
+                            "value": "$($env:ado_agent_pool)"
+                        },
+                        {
+                            "name": "runAsAutoLogon",
+                            "value": "true"
+                        },
+                        {
+                            "name": "windowsLogonAccount",
+                            "value": "$([System.Web.HttpUtility]::JavaScriptStringEncode($env:ado_agent_windows_logon_account))"
+                        },
+                        {
+                            "name": "windowsLogonPassword",
+                            "value": "$([System.Web.HttpUtility]::JavaScriptStringEncode($env:ado_agent_windows_logon_password))"
+                        }
+                    ]
+                    } 
+                ]
+                "@
+                # Write-Host $json
+                $json | Out-File artifacts.json
+                az lab vm apply-artifacts --lab-name  $env:dtl_test_lab_name --name $env:ADO_AGENT_NAME  --resource-group $env:dtl_test_lab_resource_group  --artifacts '@artifacts.json'
+              workingDirectory: '$(build.sourcesdirectory)\MultiStage\FunctionalTests'
+            env:
+             ado_agent_windows_logon_password: $(ado_agent_windows_logon_password)
+             System_AccessToken: $(System.AccessToken)
+             ADO_AGENT_NAME: $(System.DefinitionId)-$(Build.BuildId)-$(System.JobAttempt)
+          - powershell: |
+              # https://docs.microsoft.com/en-us/rest/api/azure/devops/distributedtask/agents/list?view=azure-devops-rest-5.1
+              # GET https://dev.azure.com/{organization}/_apis/distributedtask/pools/{poolId}/agents?agentName={agentName}&includeCapabilities={includeCapabilities}&includeAssignedRequest={includeAssignedRequest}&includeLastCompletedRequest={includeLastCompletedRequest}&propertyFilters={propertyFilters}&demands={demands}&api-version=5.1
+              $encodedPAT = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$($env:SYSTEM_ACCESSTOKEN)")) 
+              while($true) {
+                  Write-Host "Waiting 60s for Azure DevOps Agent to be installed."
+                  Start-Sleep -s 60
+                  $agents = Invoke-RestMethod -Method Get -Uri "$($env:SYSTEM_COLLECTIONURI)/_apis/distributedtask/pools/102/agents?agentName=$($env:ADO_AGENT_NAME)&api-version=5.1" -ContentType "application/json" -Headers @{ "Authorization" ="Basic $encodedPAT" }
+                  if($agents.count -gt 0)
+                  {
+                      if($agents.value[0].status -eq "online")
+                      {
+                          break
+                      }
+                  }
+              } 
+              Write-Host "Azure DevOps Agent successfully installed."              
+            displayName: Wait until Azure DevOps Agent Installed
+            env:
+             System_AccessToken: $(System.AccessToken)
+             ADO_AGENT_NAME: $(System.DefinitionId)-$(Build.BuildId)-$(System.JobAttempt)
+  - job: ENG_TEST_IMAGE   
+    dependsOn: ENG_DEPLOY_IMAGE
+    timeoutInMinutes: 360
+    pool: 
+      name: $(ado_agent_pool)
+      demands:
+       - Agent.Name -equals $(System.DefinitionId)-$(Build.BuildId)-$(System.JobAttempt)
+    variables:
+    - group: DevDesktop-Packer-Build-ENG     
+    steps:
+    - checkout: self
+    
+    - task: CmdLine@2
+      displayName: Run Post OS Config tests
+      continueOnError: true
+      inputs: 
+        script: 'powershell.exe -File C:\Programdata\UBS\PWBE\_Packages\BuildAuditHistory_1.02\wrapper.ps1 -Features PKG_RUN_FEATURES'
+    - task: PublishTestResults@2
+      condition: succeededOrFailed()
+      continueOnError: true
+      inputs:
+        testResultsFormat: 'NUnit'
+        testResultsFiles: '**/nUnit_TestResults.xml'
+        searchFolder: 'C:\ProgramData\UBS\PWBE\_Audit'
+    - task: Npm@1
+      condition: succeededOrFailed()
+      displayName: Install dependencies
+      continueOnError: true
+      inputs:
+        command: 'install'
+        workingDir: '$(build.sourcesdirectory)\MultiStage\PostBuildTesting'
+        customRegistry: useNpmrc
+        
+    - task: Npm@1
+      condition: succeededOrFailed()
+      displayName: Run Functional Tests
+      continueOnError: true
+      inputs:
+        command: 'custom'
+        customCommand: 'run test'
+        workingDir: '$(build.sourcesdirectory)\MultiStage\PostBuildTesting'
+        customRegistry: useNpmrc
+
+    - task: PublishTestResults@2
+      condition: succeededOrFailed()
+      inputs:
+        testResultsFormat: 'JUnit'
+        testResultsFiles: '**/TestResults*.xml'
+        failTaskOnFailedTests: false
+    - task: Npm@1
+      displayName: ICC Test Dependencies
+      condition: succeededOrFailed()
+      inputs:
+       command: 'install'
+       workingDir: '$(build.sourcesdirectory)\MultiStage\ICC_Tests'
+       customRegistry: useNpmrc
+    - task: Npm@1
+      displayName: Run ICC Tests
+      condition: succeededOrFailed()
+      inputs:
+        command: 'custom'
+        customCommand: 'run test'
+        workingDir: '$(build.sourcesdirectory)\MultiStage\ICC_Tests'
+        customRegistry: useNpmrc
+    - task: CopyFiles@2
+      displayName: "Prepare ICC test artifacts"
+      condition: succeededOrFailed()
+      inputs:
+        SourceFolder: '$(build.sourcesdirectory)\MultiStage\ICC_Tests\reports'
+        contents: '**/ICC_Test_Results*.html'
+        targetFolder: $(Build.ArtifactStagingDirectory)\ICC_Testing_Report
+    - task: PublishBuildArtifacts@1
+      displayName: "Publish ICC Testing HTML report"
+      condition: succeededOrFailed()
+      inputs:
+        pathToPublish: $(Build.ArtifactStagingDirectory)\ICC_Testing_Report
+        artifactName: ICC_Testing_Report       
+  - job: ENG_TEST_CLEANUP   
+    dependsOn: ENG_TEST_IMAGE
+    condition: succeeded()
+    variables:
+    - group: DevDesktop-Packer-Build-ENG     
+    steps:
+    - task: AzureDevTestLabsDeleteVM@3
+      enabled: true
+      inputs:
+        azureSubscription: 'arm-packer-build-eng'
+        LabId: '$(dtl_test_lab_resource_id)'
+        LabVmId: '$(dtl_test_lab_resource_id)/virtualMachines/$(System.DefinitionId)-$(Build.BuildId)-$(System.JobAttempt)'
+    - powershell: |
+        # https://docs.microsoft.com/en-us/rest/api/azure/devops/distributedtask/agents/delete?view=azure-devops-rest-6.0
+        # DELETE https://dev.azure.com/{organization}/_apis/distributedtask/pools/{poolId}/agents/{agentId}?api-version=6.0-preview.1
+        $encodedPAT = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$($env:SYSTEM_ACCESSTOKEN)"))         
+        $agents = Invoke-RestMethod -Method Get -Uri "$($env:SYSTEM_COLLECTIONURI)/_apis/distributedtask/pools/102/agents?agentName=$($env:ADO_AGENT_NAME)&api-version=5.1" -ContentType "application/json" -Headers @{ "Authorization" ="Basic $encodedPAT" }                    
+        if($agents.count -gt 0)
+        {
+          Invoke-RestMethod -Method Delete -Uri "$($env:SYSTEM_COLLECTIONURI)/_apis/distributedtask/pools/102/agents/$($agents.value[0].id)?api-version=6.0-preview.1" -ContentType "application/json" -Headers @{ "Authorization" ="Basic $encodedPAT" }                    
+          Write-Host "Azure DevOps Agent successfully Removed."              
+        }
+      displayName: Azure DevOps Agent Removal
+      env:
+       System_AccessToken: $(System.AccessToken)
+       ADO_AGENT_NAME: $(System.DefinitionId)-$(Build.BuildId)-$(System.JobAttempt)
+- stage: TEST
+  dependsOn:
+  - ENG_TEST
+  variables:
+  - group: DevDesktop-Packer-Build-TEST    
+  jobs:
+  - job: TEST_COPY_IMAGE
+    timeoutInMinutes: 360    
+    steps:
+    - checkout: none
+    - task: AzureCLI@2
+      displayName: Get Gallery Image Version Id
+      name: GetGalleryImageVersionId
+      enabled: false
+      inputs:
+        azureSubscription: 'arm-packer-build-test'
+        scriptType: 'ps'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          az login --service-principal -u $env:servicePrincipalId -p $env:servicePrincipalKey --tenant $env:source_managed_image_gallery_tenant_id
+          az login --service-principal -u $env:servicePrincipalId -p $env:servicePrincipalKey --tenant $env:tenantId
+          az account set --subscription $env:source_managed_image_gallery_subscription_id
+          
+          $sourceImgVerId = az sig image-version show `
+          --resource-group $env:source_managed_image_resource_group_name `
+          --gallery-name $env:source_managed_image_gallery_name `
+          --gallery-image-definition $env:ManagedImagePrefix `
+          --gallery-image-version $env:ImageVersion `
+          --query "id" -o tsv
+          
+          Write-Host "##vso[task.setvariable variable=ManagedImageSharedImageGalleryId;isOutput=true]$sourceImgVerId"
+        addSpnToEnvironment: true
+    - task: AzureCLI@2
+      displayName: Copy Gallery Image
+      enabled: false
+      inputs:
+        azureSubscription: 'arm-packer-build-test'
+        scriptType: 'ps'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          az login --service-principal -u $env:servicePrincipalId -p $env:servicePrincipalKey --tenant $env:source_managed_image_gallery_tenant_id
+          # az login --service-principal -u $env:servicePrincipalId -p $env:servicePrincipalKey --tenant $env:tenantId
+          az account set --subscription $env:destination_managed_image_gallery_subscription_id
+          
+          az sig image-version create `
+          --resource-group $env:destination_managed_image_resource_group_name `
+          --gallery-name $env:destination_managed_image_gallery_name `
+          --gallery-image-definition $env:ManagedImagePrefix `
+          --gallery-image-version $env:ImageVersion `
+          --target-regions northeurope `
+          --replica-count 1 `
+          --managed-image $env:GetGalleryImageVersionId_ManagedImageSharedImageGalleryId
+        addSpnToEnvironment: true
+- stage: VNEXT
+  dependsOn:
+  - ENG_TEST
+  variables:
+  - group: DevDesktop-Packer-Build-VNEXT
+  jobs:
+  - job: VNEXT_COPY_IMAGE
+    timeoutInMinutes: 360
+    steps:
+    - checkout: none
+    - task: AzureCLI@2
+      displayName: Get Gallery Image Version Id
+      name: GetGalleryImageVersionId
+      inputs:
+        azureSubscription: 'arm-packer-build-vnext'
+        scriptType: 'ps'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          az login --service-principal -u $env:servicePrincipalId -p $env:servicePrincipalKey --tenant $env:source_managed_image_gallery_tenant_id
+          az login --service-principal -u $env:servicePrincipalId -p $env:servicePrincipalKey --tenant $env:tenantId
+          az account set --subscription $env:source_managed_image_gallery_subscription_id
+          
+          $sourceImgVerId = az sig image-version show `
+          --resource-group $env:source_managed_image_resource_group_name `
+          --gallery-name $env:source_managed_image_gallery_name `
+          --gallery-image-definition $env:ManagedImagePrefix `
+          --gallery-image-version $env:ImageVersion `
+          --query "id" -o tsv
+          
+          Write-Host "##vso[task.setvariable variable=ManagedImageSharedImageGalleryId;isOutput=true]$sourceImgVerId"
+        addSpnToEnvironment: true
+    - task: AzureCLI@2
+      displayName: Copy Gallery Image
+      inputs:
+        azureSubscription: 'arm-packer-build-vnext'
+        scriptType: 'ps'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          az login --service-principal -u $env:servicePrincipalId -p $env:servicePrincipalKey --tenant $env:source_managed_image_gallery_tenant_id
+          az login --service-principal -u $env:servicePrincipalId -p $env:servicePrincipalKey --tenant $env:tenantId
+          az account list --output table
+          az account set --subscription $env:destination_managed_image_gallery_subscription_id
+
+          az sig image-version create `
+          --resource-group $env:destination_managed_image_resource_group_name `
+          --gallery-name $env:destination_managed_image_gallery_name `
+          --gallery-image-definition $env:ManagedImagePrefix `
+          --gallery-image-version $env:ImageVersion `
+          --target-regions northeurope `
+          --replica-count 1 `
+          --managed-image $env:GetGalleryImageVersionId_ManagedImageSharedImageGalleryId
+        addSpnToEnvironment: true
+- stage: VNEXT_TEST 
+  dependsOn:
+  - VNEXT
+  variables:
+  - group: DevDesktop-Packer-Build-VNEXT
+  jobs:
+  - deployment: VNEXT_DEPLOY_IMAGE
+    timeoutInMinutes: 360
+    environment: VNEXT
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - checkout: self
+          - task: PowerShell@2
+            displayName: 'Create VM API'
+            name: CreateVM
+            inputs:
+              targetType: 'inline'
+              script: |
+                # Calculate expiration date
+                $expirationDate=(Get-Date).AddDays(28);
+                
+                # POST https://fn-vmstate-ddg01-neu-vnext.azurewebsites.net/api/workflows?code=KnMZIId7TKAqjN95bgYrATBkLoNVhCcZfZ4zLUIuibdzDI7pSVv0Ig==                
+                $postJSON = @"
+                  {
+                    "WorkflowName":"CreateDevDesktop",
+                    "Context": {
+                        "labId": "$($env:dtl_test_lab_resource_id)",
+                        "vmName": "$($env:VM_NAME)",
+                        "userUpn": "$($env:dtl_test_lab_vm_upn)",
+                        "machineSize": "$($env:dtl_test_lab_vm_size)",
+                        "expirationDate": "$($expirationDate.ToString("yyyy-MM-dd'T'HH:mm:ss+0000"))"
+                    }
+                  }
+                "@
+                $created = Invoke-RestMethod -Method Post -Uri "https://fn-vmstate-ddg01-neu-vnext.azurewebsites.net/api/workflows?code=KnMZIId7TKAqjN95bgYrATBkLoNVhCcZfZ4zLUIuibdzDI7pSVv0Ig==" -Body $postJSON -ContentType "application/json"              
+
+                $getJSON = @"
+                  {
+                    "vmName": "$($env:VM_NAME)"
+                  }
+                "@
+                while($true) {
+                  Write-Host "Waiting for Virtual Machine to be created."
+                  Start-Sleep -s 60
+                  # POST https://fn-desktops-ddg01-neu-vnext.azurewebsites.net/api/desktopsstatus?code=cO28KmGCf1UgOpIFVqSA/F33SZKj7aZhUKK3ygDcCJb8KEfdjRbiMA==
+                  $VM = Invoke-RestMethod -Method Post -Uri "https://fn-desktops-ddg01-neu-vnext.azurewebsites.net/api/desktopsstatus?code=cO28KmGCf1UgOpIFVqSA/F33SZKj7aZhUKK3ygDcCJb8KEfdjRbiMA==" -Body $getJSON -ContentType "application/json"
+                  if($VM.status -eq 'Available')
+                  {
+                    Write-Host "##vso[task.setvariable variable=ADO_AGENT_NAME;isoutput=true]$($VM.vmName)"
+                    break
+                  }
+                  elseif($VM.status -eq 'Failed')
+                  {
+                    Write-Host "##vso[task.logissue type=error]Failed to create Virtual Machine."
+                    break
+                  }
+                } 
+                Write-Host "Virtual Machine to be created."
+            env:             
+             VM_NAME: $(System.DefinitionId)-$(Build.BuildId)-$(System.JobAttempt)
+          - task: AzureCLI@2
+            displayName: Wait for Domain Join Extension
+            enabled: true
+            inputs:
+              azureSubscription: 'arm-packer-build-vnext'
+              scriptType: 'ps'
+              scriptLocation: 'inlineScript'
+              inlineScript: |              
+                az vm extension wait --created --name joindomain --resource-group $env:dtl_test_lab_resource_group --vm-name $env:CREATEVM_ADO_AGENT_NAME
+          - task: AzureCLI@2
+            displayName: Install Artifacts Post Domain Join
+            enabled: true                   
+            inputs:
+              azureSubscription: 'arm-packer-build-vnext'
+              scriptType: 'ps'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                Add-Type -AssemblyName System.Web
+                $json = @"
+                  [
+                    {
+                    "artifactId": "/artifactSources/dtl-artifacts/artifacts/openjdk-jre-8",
+                    "parameters": []
+                    },
+                    {
+                    "artifactId": "/artifactSources/dtl-artifacts/artifacts/nodejs-12",
+                    "parameters": []
+                    },
+                    {
+                    "artifactId": "/artifactSources/dtl-artifacts/artifacts/windows-winrm",
+                    "parameters": []
+                    },
+                    {
+                    "artifactId": "/artifactSources/dtl-artifacts/artifacts/windows-vsts-test-user",
+                    "parameters": [
+                        {
+                            "name": "windowsLogonAccount",
+                            "value": "$([System.Web.HttpUtility]::JavaScriptStringEncode($env:ado_agent_windows_logon_account))"
+                        }
+                    ]
+                    },
+                    {
+                    "artifactId": "/artifactSources/dtl-artifacts/artifacts/windows-vsts-agent",
+                    "parameters": [
+                        {
+                            "name": "vstsAccount",
+                            "value": "$($env:ado_organization)"
+                        },
+                        {
+                            "name": "personalAccessToken",
+                            "value": "$($env:System_AccessToken)"
+                        },
+                        {
+                            "name": "poolName",
+                            "value": "$($env:ado_agent_pool)"
+                        },
+                        {
+                            "name": "runAsAutoLogon",
+                            "value": "false"
+                        },
+                        {
+                            "name": "windowsLogonAccount",
+                            "value": "$([System.Web.HttpUtility]::JavaScriptStringEncode($env:ado_agent_windows_logon_account))"
+                        },
+                        {
+                            "name": "windowsLogonPassword",
+                            "value": "$([System.Web.HttpUtility]::JavaScriptStringEncode($env:ado_agent_windows_logon_password))"
+                        }
+                    ]
+                    } 
+                ]
+                "@
+                # Write-Host $json
+                $json | Out-File artifacts.json
+                az lab vm apply-artifacts --lab-name $env:dtl_test_lab_name --name $env:CREATEVM_ADO_AGENT_NAME --resource-group $env:dtl_test_lab_resource_group --artifacts '@artifacts.json'
+              workingDirectory: '$(build.sourcesdirectory)\MultiStage\FunctionalTests'
+            env:
+             ado_agent_windows_logon_password: $(ado_agent_windows_logon_password)
+             System_AccessToken: $(System.AccessToken)
+          - powershell: |
+              # https://docs.microsoft.com/en-us/rest/api/azure/devops/distributedtask/agents/list?view=azure-devops-rest-5.1
+              # GET https://dev.azure.com/{organization}/_apis/distributedtask/pools/{poolId}/agents?agentName={agentName}&includeCapabilities={includeCapabilities}&includeAssignedRequest={includeAssignedRequest}&includeLastCompletedRequest={includeLastCompletedRequest}&propertyFilters={propertyFilters}&demands={demands}&api-version=5.1
+              $encodedPAT = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$($env:SYSTEM_ACCESSTOKEN)")) 
+              while($true) {
+                  Write-Host "Waiting 60s for Azure DevOps Agent to be installed."
+                  Start-Sleep -s 60
+                  $agents = Invoke-RestMethod -Method Get -Uri "$($env:SYSTEM_COLLECTIONURI)/_apis/distributedtask/pools/102/agents?agentName=$($env:CREATEVM_ADO_AGENT_NAME)&api-version=5.1" -ContentType "application/json" -Headers @{ "Authorization" ="Basic $encodedPAT" }
+                  if($agents.count -gt 0)
+                  {
+                      if($agents.value[0].status -eq "online")
+                      {
+                          break
+                      }
+                  }
+              } 
+              Write-Host "Azure DevOps Agent successfully installed."              
+            displayName: Wait until Azure DevOps Agent Installed
+            env:
+             System_AccessToken: $(System.AccessToken) 
+             ADO_AGENT_NAME: $(System.DefinitionId)-$(Build.BuildId)-$(System.JobAttempt)         
+  - job: VNEXT_TEST_IMAGE   
+    dependsOn: VNEXT_DEPLOY_IMAGE
+    timeoutInMinutes: 360
+    pool: 
+      name: $(ado_agent_pool)
+      demands:
+       - Agent.Name -equals $(System.DefinitionId)-$(Build.BuildId)-$(System.JobAttempt)
+    variables:
+    - group: DevDesktop-Packer-Build-VNEXT     
+    steps:
+    - checkout: self
+    
+    - task: CmdLine@2
+      displayName: Run Post OS Config tests
+      continueOnError: true
+      inputs: 
+        script: 'powershell.exe -File C:\Programdata\UBS\PWBE\_Packages\BuildAuditHistory_1.02\wrapper.ps1 -Features PKG_RUN_FEATURES'
+    - task: PublishTestResults@2
+      condition: succeededOrFailed()
+      continueOnError: true
+      inputs:
+        testResultsFormat: 'NUnit'
+        testResultsFiles: '**/nUnit_TestResults.xml'
+        searchFolder: 'C:\ProgramData\UBS\PWBE\_Audit'
+    - task: Npm@1
+      condition: succeededOrFailed()
+      displayName: Install dependencies
+      continueOnError: true
+      inputs:
+        command: 'install'
+        workingDir: '$(build.sourcesdirectory)\MultiStage\PostBuildTesting'
+        customRegistry: useNpmrc
+        
+    - task: Npm@1
+      condition: succeededOrFailed()
+      continueOnError: true
+      displayName: Run Functional Tests
+      enabled: true
+      inputs:
+        command: 'custom'
+        customCommand: 'run test'
+        workingDir: '$(build.sourcesdirectory)\MultiStage\PostBuildTesting'
+        customRegistry: useNpmrc
+
+    - task: PublishTestResults@2
+      condition: succeededOrFailed()
+      inputs:
+        testResultsFormat: 'JUnit'
+        testResultsFiles: '**/TestResults*.xml'
+        failTaskOnFailedTests: false
+    - task: Npm@1
+      displayName: ICC Test Dependencies
+      condition: succeededOrFailed()
+      continueOnError: true
+      inputs:
+       command: 'install'
+       workingDir: '$(build.sourcesdirectory)\MultiStage\ICC_Tests'
+       customRegistry: useNpmrc
+    - task: Npm@1
+      displayName: Run ICC Tests
+      condition: succeededOrFailed()
+      continueOnError: true
+      inputs:
+        command: 'custom'
+        customCommand: 'run test'
+        workingDir: '$(build.sourcesdirectory)\MultiStage\ICC_Tests'
+        customRegistry: useNpmrc
+    - task: CopyFiles@2
+      displayName: "Prepare ICC test artifacts"
+      condition: succeededOrFailed()
+      inputs:
+        SourceFolder: '$(build.sourcesdirectory)\MultiStage\ICC_Tests\reports'
+        contents: '**/ICC_Test_Results*.html'
+        targetFolder: $(Build.ArtifactStagingDirectory)\ICC_Testing_Report
+    - task: PublishBuildArtifacts@1
+      displayName: "Publish ICC Testing HTML report"
+      condition: succeededOrFailed()
+      inputs:
+        pathToPublish: $(Build.ArtifactStagingDirectory)\ICC_Testing_Report
+        artifactName: ICC_Testing_Report       
+  - job: VNEXT_TEST_CLEANUP   
+    dependsOn: VNEXT_TEST_IMAGE
+    condition: succeeded()
+    variables:
+    - group: DevDesktop-Packer-Build-VNEXT     
+    steps:
+    - task: AzureDevTestLabsDeleteVM@3
+      enabled: false
+      inputs:
+        azureSubscription: 'arm-packer-build-vnext'
+        LabId: '$(dtl_test_lab_resource_id)'
+        LabVmId: '$(dtl_test_lab_resource_id)/virtualMachines/$(System.DefinitionId)-$(Build.BuildId)-$(System.JobAttempt)'
+    - powershell: |
+        # https://docs.microsoft.com/en-us/rest/api/azure/devops/distributedtask/agents/delete?view=azure-devops-rest-6.0
+        # DELETE https://dev.azure.com/{organization}/_apis/distributedtask/pools/{poolId}/agents/{agentId}?api-version=6.0-preview.1
+        $encodedPAT = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$($env:SYSTEM_ACCESSTOKEN)"))         
+        $agents = Invoke-RestMethod -Method Get -Uri "$($env:SYSTEM_COLLECTIONURI)/_apis/distributedtask/pools/102/agents?agentName=$($env:ADO_AGENT_NAME)&api-version=5.1" -ContentType "application/json" -Headers @{ "Authorization" ="Basic $encodedPAT" }                    
+        if($agents.count -gt 0)
+        {
+          Invoke-RestMethod -Method Delete -Uri "$($env:SYSTEM_COLLECTIONURI)/_apis/distributedtask/pools/102/agents/$($agents.value[0].id)?api-version=6.0-preview.1" -ContentType "application/json" -Headers @{ "Authorization" ="Basic $encodedPAT" }                    
+          Write-Host "Azure DevOps Agent successfully Removed."              
+        }
+      displayName: Azure DevOps Agent Removal
+      env:
+       System_AccessToken: $(System.AccessToken)
+       ADO_AGENT_NAME: $(System.DefinitionId)-$(Build.BuildId)-$(System.JobAttempt)
+- stage: PROD
+  dependsOn:
+  - VNEXT_TEST
+  variables:
+  - group: DevDesktop-Packer-Build-PROD
+  jobs:
+  - job: PROD_COPY_IMAGE
+    timeoutInMinutes: 360
+    steps:
+    - checkout: none
+    - task: AzureCLI@2
+      displayName: Get Gallery Image Version Id
+      name: GetGalleryImageVersionId
+      inputs:
+        azureSubscription: 'arm-packer-build-prod'
+        scriptType: 'ps'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          az login --service-principal -u $env:servicePrincipalId -p $env:servicePrincipalKey --tenant $env:source_managed_image_gallery_tenant_id
+          az login --service-principal -u $env:servicePrincipalId -p $env:servicePrincipalKey --tenant $env:tenantId
+          az account set --subscription $env:source_managed_image_gallery_subscription_id
+          
+          $sourceImgVerId = az sig image-version show `
+          --resource-group $env:source_managed_image_resource_group_name `
+          --gallery-name $env:source_managed_image_gallery_name `
+          --gallery-image-definition $env:ManagedImagePrefix `
+          --gallery-image-version $env:ImageVersion `
+          --query "id" -o tsv
+          
+          Write-Host "##vso[task.setvariable variable=ManagedImageSharedImageGalleryId;isOutput=true]$sourceImgVerId"
+        addSpnToEnvironment: true
+    - task: AzureCLI@2
+      displayName: Copy Gallery Image
+      inputs:
+        azureSubscription: 'arm-packer-build-prod'
+        scriptType: 'ps'
+        scriptLocation: 'inlineScript'
+        inlineScript: |
+          az login --service-principal -u $env:servicePrincipalId -p $env:servicePrincipalKey --tenant $env:source_managed_image_gallery_tenant_id
+          # az login --service-principal -u $env:servicePrincipalId -p $env:servicePrincipalKey --tenant $env:tenantId
+          az account set --subscription $env:destination_managed_image_gallery_subscription_id
+          
+          az sig image-version create `
+          --resource-group $env:destination_managed_image_resource_group_name `
+          --gallery-name $env:destination_managed_image_gallery_name `
+          --gallery-image-definition $env:ManagedImagePrefix `
+          --gallery-image-version $env:ImageVersion `
+          --target-regions northeurope `
+          --replica-count 1 `
+          --managed-image $env:GetGalleryImageVersionId_ManagedImageSharedImageGalleryId
+        addSpnToEnvironment: true
