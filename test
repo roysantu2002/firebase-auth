@@ -1,1 +1,912 @@
 
+#chrome
+const common = require("../common/commonfunc")
+const exec = require('child_process').exec
+const fs = require("fs")
+var assert = require('chai').assert
+
+let testSet = fs.readFileSync(__dirname + '\\testCases_chrome.json')
+testCases = JSON.parse(testSet)
+
+let current_datetime = new Date();
+let formatted_date = current_datetime.getDate() + "-" + (current_datetime.getMonth() + 1) + "-" + current_datetime.getFullYear();
+const dirPath = "./reports/" + formatted_date
+let fileNameTxt = "Chrome_" + current_datetime.getDate() + "-" + (current_datetime.getMonth() + 1) + "-" + current_datetime.getFullYear() + "-" + current_datetime.getHours() + "-" + current_datetime.getMinutes() + "-" + current_datetime.getSeconds();
+const com = new common(dirPath)
+com.createFile(fileNameTxt)
+
+com.createDir();
+/* let sysVersion = ""
+ fs.readFile(dirPath + '/chrome.txt', 'utf8', function(err, data){
+    if(err) throw err
+    sysVersion = data
+}) 
+sysVersion = "83.0.4103.61" */
+
+// killRunningTask("chrome.exe");
+// killRunningTaskPromise("chrome.exe").then((data)=>{
+// })
+
+let waitTime = 6000;
+let waitUntilTimeout = 25000;
+let toggleReloadSession = false;
+
+describe('Chrome test cases', function () {
+    testCases.map((test) => {
+        switch (test.tcID) {
+            case "XXXXX01":
+                it(test.tcDescription, function () {
+                    //Open a goto address
+                    browser.reloadSession()
+                    browser.navigateTo('http://goto/cloud')
+                    // browser.pause(waitTime);
+                    browser.waitUntil(
+                        () => browser.getTitle() === "Keeping UBS competitive in a digitized world. - goto/Cloud",
+                        {
+                            timeout: waitUntilTimeout,
+                            timeoutMsg: 'expected page goto/cloud couldn\'t load'
+                        }
+                    );
+                    browser.getTitle().should.be.equal("Keeping UBS competitive in a digitized world. - goto/Cloud");
+                    browser.pause(waitTime)
+
+                })
+                break
+            case "XXXXX02":
+                it(test.tcDescription, function () {
+                    //Use the default homepage
+                    if (toggleReloadSession) browser.reloadSession()
+                    browser.navigateTo(test.homepage);
+                    // browser.pause(waitTime);
+                    browser.waitUntil(
+                        () => $('//label[text()=\'WebSSO\']').isExisting(),
+                        {
+                            timeout: waitUntilTimeout,
+                            timeoutMsg: 'Timeout waiting for homepage to load. Waited 25 seconds.'
+                        }
+                    );
+                    const isWebSSOElementExists = $('//label[text()=\'WebSSO\']').isExisting()
+                    isWebSSOElementExists.should.be.equal(true)
+                    browser.pause(waitTime)
+
+
+                })
+                break
+            case "XXXXX03":
+                it(test.tcDescription, function () {
+                    //Open an internet page
+                    if (toggleReloadSession) browser.reloadSession()
+                    browser.navigateTo('https://www.microsoft.com/en-gb/')
+                    // browser.pause(waitTime);
+                   browser.waitUntil(
+                        () => browser.getTitle() === "Microsoft - Official Home Page",
+                        {
+                            timeout: waitUntilTimeout,
+                            timeoutMsg: 'Timeout waiting for Microsoft page to load'
+                        }
+                    );
+                    browser.getTitle().should.be.equal("Microsoft - Official Home Page");
+                    browser.pause(waitTime)
+                })
+                break
+            case "XXXXX04":
+                it(test.tcDescription, function () {
+                    //Google chrome search bar
+                    if (toggleReloadSession) browser.reloadSession()
+                    browser.navigateTo("https://google.com");
+                    browser.keys(['a', 'b']);
+                    com.create_report_body(fileNameTxt, "PASSED", test.tcID, test.tcDescription, test.tcExpectedResult, '', '')
+
+                })
+                break
+            case "XXXXX05":
+                it(test.tcDescription, function () {
+                    //WebSSO window launching
+                    if (toggleReloadSession) browser.reloadSession()
+                    browser.navigateTo(test.homepage);
+                    // browser.pause(waitTime);
+                    browser.waitUntil(
+                        () => $('//label[text()=\'WebSSO\']').isExisting(),
+                        {
+                            timeout: waitUntilTimeout,
+                            timeoutMsg: 'Timeout waiting for homepage to load. Waited 25 seconds.'
+                        }
+                    );
+                    const isWebSSOElementExists = $('//label[text()=\'WebSSO\']').isExisting()
+                    isWebSSOElementExists.should.be.equal(true)
+                    browser.pause(waitTime)
+
+                })
+                break
+            case "XXXXX06":
+                it(test.tcDescription, function () {
+                    //---------------------------------------Default Chrome
+                    var regedit = require('regedit')
+
+                    regedit.list('HKCU\\Software\\Microsoft\\Windows\\Shell\\Associations\\UrlAssociations\\http\\UserChoice', function (err, result) {
+                        var defaultHttpValue = result['HKCU\\Software\\Microsoft\\Windows\\Shell\\Associations\\UrlAssociations\\http\\UserChoice'].values['ProgId'].value
+                        if (defaultHttpValue === "ChromeHTML") {
+                            console.log("Default browser is chrome")
+                        } else if (defaultHttpValue === "AppXq0fevzme2pys62n3e0fbqa7peapykr8v") {
+                            console.log("Default browser is edge")
+                        }
+                        defaultHttpValue.should.be.equal("ChromeHTML")
+                    })
+
+                    regedit.list('HKCU\\Software\\Microsoft\\Windows\\Shell\\Associations\\UrlAssociations\\https\\UserChoice', function (err, result) {
+                        var defaultHttpsValue = result['HKCU\\Software\\Microsoft\\Windows\\Shell\\Associations\\UrlAssociations\\https\\UserChoice'].values['ProgId'].value
+                        if (defaultHttpsValue === "ChromeHTML") {
+                            console.log("Default browser is chrome")
+                        } else if (defaultHttpsValue === "AppX90nv6nhay5n6a98fnetv7tpk64pp35es") {
+                            console.log("Default browser is edge")
+                        }
+                        defaultHttpsValue.should.be.equal("ChromeHTML")
+                    })
+
+                    browser.pause(waitTime)
+
+                })
+                break
+            case "XXXXX07":
+                 it(test.tcDescription, function () {
+                    // browser.pause(waitTime)
+                    if (toggleReloadSession) browser.reloadSession()
+                    browser.navigateTo('chrome://version/ ')
+                    // browser.pause(waitTime)
+                    browser.waitUntil(
+                        () => $("#outer").isExisting(),
+                        {
+                            timeout: waitUntilTimeout,
+                            timeoutMsg: 'expected id outer couldn\'t be found'
+                        }
+                    );
+                    const body = $("#outer").getText().split("\n")
+                    body.map((txt) => {
+                        if (txt.includes('Official')) {
+                            var version = txt.substring(14, txt.indexOf(".", 14))
+                            version.should.be.equal(test.expectedChromeVersion)
+                        }
+                    })
+                    browser.pause(waitTime)
+
+                })
+                break
+
+            default:
+                console.log('No test found')
+        }
+    })
+})
+
+sleep = (ms) => {
+    return new Promise((resolve, reject) => setTimeout(resolve, ms));
+}
+
+#logic
+const common = require("../common/commonfunc")
+const fs = require("fs")
+var should = require('chai').should()
+const regedit = require('regedit')
+
+let testSet = fs.readFileSync(__dirname + '\\testCases_fsLogix.json')
+testCases = JSON.parse(testSet)
+
+let current_datetime = new Date();
+let formatted_date = current_datetime.getDate() + "-" + (current_datetime.getMonth() + 1) + "-" + current_datetime.getFullYear();
+const dirPath = "./reports/" + formatted_date
+let fileNameTxt = "FSLogix_" + current_datetime.getDate() + "-" + (current_datetime.getMonth() + 1) + "-" + current_datetime.getFullYear() + "-" + current_datetime.getHours() + "-" + current_datetime.getMinutes() + "-" + current_datetime.getSeconds();
+const com = new common(dirPath)
+
+com.createDir();
+com.createFile(fileNameTxt)
+
+describe('FS Logix test cases', function () {
+    testCases.map((test) => {
+        switch (test.tcID) {
+            case "XXXXX01":
+                it(test.tcDescription, function () {
+                    regedit.list('HKCU\\Software\\FSLogix\\Profiles\\Session', function (err, result) {
+                        var value = result['HKLM\\SOFTWARE\\FSLogix\\Profiles\\ObjectSpecific'].values['Enabled'].value
+                        console.log(value)
+                        value.should.be.equal(1)
+                    })
+                })
+                break
+            case "XXXXX02":
+                it(test.tcDescription, function () {
+                    regedit.list('HKCU\\Software\\FSLogix\\Profiles\\Session', function (err, result) {
+                        var value = result['HKLM\\SOFTWARE\\FSLogix\\Profiles\\ObjectSpecific'].values['PreventLoginWithFailure'].value
+                        console.log(value)
+                        value.should.be.equal(1)
+                    })
+                })
+                break
+            case "XXXXX03":
+                it(test.tcDescription, function () {
+                    regedit.list('HKCU\\Software\\FSLogix\\Profiles\\Session', function (err, result) {
+                        var value = result['HKLM\\SOFTWARE\\FSLogix\\Profiles\\ObjectSpecific'].values['SIDDIRNameMatch'].value
+                        console.log(value)
+                        value.should.be.equal("%username%_%sid%")
+                    })
+                })
+                break
+            case "XXXXX04":
+                it(test.tcDescription, function () {
+                    regedit.list('HKCU\\Software\\FSLogix\\Profiles\\Session', function (err, result) {
+                        var value = result['HKLM\\SOFTWARE\\FSLogix\\Profiles\\ObjectSpecific'].values['SIDDIRNamePattern'].value
+                        console.log(value)
+                        value.should.be.equal("%username%_%sid%")
+                    })
+                })
+                break
+            case "XXXXX05":
+                it(test.tcDescription, function () {
+                    regedit.list('HKCU\\Software\\FSLogix\\Profiles\\Session', function (err, result) {
+                        var value = result['HKLM\\SOFTWARE\\FSLogix\\Profiles\\ObjectSpecific'].values['SizeInMBs'].value
+                        console.log(value)
+                        value.should.be.equal(50000)
+                    })
+                })
+                break
+            case "XXXXX06":
+                it(test.tcDescription, function () {
+                    regedit.list('HKCU\\Software\\FSLogix\\Profiles\\Session', function (err, result) {
+                        var value = result['HKLM\\SOFTWARE\\FSLogix\\Profiles\\ObjectSpecific'].values['VolumeType'].value
+                        console.log(value)
+                        value.should.be.equal("vhdx")
+                    })
+                })
+                break
+
+            default:
+                console.log('No test found')
+        }
+    })
+})
+
+#ie
+const common = require("../common/commonfunc")
+const exec = require('child_process').exec
+const fs = require("fs")
+
+let testSet = fs.readFileSync(__dirname + '\\testCases_ie.json')
+testCases = JSON.parse(testSet)
+
+let current_datetime = new Date();
+let formatted_date = current_datetime.getDate() + "-" + (current_datetime.getMonth() + 1) + "-" + current_datetime.getFullYear();
+const dirPath = "./reports/" + formatted_date
+let fileNameTxt = "Internet_Explorer_"+ current_datetime.getDate() + "-" + (current_datetime.getMonth() + 1) + "-" + current_datetime.getFullYear() + "-" + current_datetime.getHours() + "-" + current_datetime.getMinutes() + "-" + current_datetime.getSeconds();
+const com = new common(dirPath)
+com.createFile(fileNameTxt)
+
+com.createDir();
+
+killRunningTask("3.14.0-x64-IEDriverServer.exe");
+killRunningTask("iexplore.exe");
+
+browser.executeAsync((done) => {
+    setTimeout(done, 8000)
+})
+
+describe('IE test cases', () => {
+    testCases.map((test) => {
+        switch (test.tcID) {
+            case "XXXXX01":
+                it(test.tcDescription, function() {
+                    //Open a goto page
+                    browser.reloadSession()
+                    browser.navigateTo('http://goto/myhub')
+                    browser.pause(10000)
+                    console.log(browser.getUrl())
+                    browser.getTitle.should.be.equal("My Hub");
+                    browser.pause(6000)
+                })
+                break
+            case "XXXXX02":
+                it(test.tcDescription, function() {
+                    //Use default homepage
+                    browser.reloadSession()
+                    browser.navigateTo("https://intranet.ubs.net/")
+                    browser.pause(10000)
+                    //console.log(browser.capabilities)
+                    console.log(browser.getUrl())
+                    browser.switchWindow('ISSO Global Login')
+                    var isWebSSOElementExists = $('//label[text()=\'WebSSO\']').isExisting()
+                    isWebSSOElementExists.should.be.equal(true)
+                    browser.pause(6000)
+                })
+                break
+            case "XXXXX03":
+                it(test.tcDescription, function() {
+                    //Open https page: https://nodejs.org/en/, title: Node.js
+                    browser.reloadSession()
+                    browser.navigateTo('https://nodejs.org/en/')
+                    browser.pause(6000)
+                    //console.log(browser.capabilities)
+                    console.log(browser.getUrl())
+                    browser.switchWindow("Node.js")
+                    var isElementExists = $('//a[text()=\'Home\']').isExisting()
+                    isElementExists.should.be.equal(true)
+                    browser.pause(6000)
+                })
+                break
+            case "XXXXX04":
+                it(test.tcDescription, function() {
+                    //Open an internet page
+                    browser.reloadSession()
+                    browser.navigateTo('https://google.com/')
+                    browser.pause(4000)
+                    console.log(browser.getUrl())
+                    browser.switchWindow("Google")
+                    var isAboutElementExists = $('//a[text()=\'About\']').isExisting()
+                    isAboutElementExists.should.be.equal(true)
+                    browser.pause(6000)
+                })
+                break
+            case "XXXXX05":
+                it(test.tcDescription, function() {
+                    //Open a page in new tab, https://www.microsoft.com/en-us/, Microsoft - Official Home Page
+                    browser.reloadSession()
+                    browser.navigateTo('https://www.microsoft.com/en-us/')
+                    browser.pause(8000)
+                    console.log(browser.getUrl())
+                    browser.switchWindow("Microsoft - Official Home Page")
+                    var isElementExists = $('//span[text()=\'Follow Microsoft\']').isExisting()
+                    isElementExists.should.be.equal(true)
+                    browser.pause(6000)
+                })
+                break
+            case "XXXXX06":
+                it(test.tcDescription, function() {
+                    //Open quick tab
+                    browser.reloadSession()
+                    com.create_report_body(fileNameTxt, "PASSED", test.tcID, test.tcDescription, test.tcExpectedResult, '', '')
+                    browser.pause(6000)
+                })
+                break
+            case "XXXXX07":
+                it(test.tcDescription, function() {
+                    //3D check: http://www.fishgl.com, FishGL
+                    browser.reloadSession()
+                    browser.navigateTo('http://www.fishgl.com')
+                    browser.pause(15000)
+                    console.log(browser.getUrl())
+                    browser.switchWindow("FishGL")
+                    var isElementExists = $('//canvas').isExisting()
+                    isElementExists.should.be.equal(true)
+                })
+                break
+            case "XXXXX08":
+                it(test.tcDescription, function() {
+                    //Developer tools
+                    browser.reloadSession()
+                    browser.navigateTo("http://google.com")
+                    console.log(browser.getUrl())
+                    browser.keys("F12")
+                    browser.pause(6000)
+                })
+                break
+
+            case "XXXXX09":
+                it(test.tcDescription, function() {
+                    //Live trading website: https://www.bseindia.com/
+                    browser.reloadSession()
+                    browser.navigateTo('https://www.bseindia.com/')
+                    browser.pause(8000)
+                    console.log(browser.getUrl())
+                    browser.switchWindow("www.bseindia.com")
+                    var isElementExists = $('//a[text()=\'Home\']').isExisting()
+                    isElementExists.should.be.equal(true)
+                })
+                break
+            default:
+                console.log('No test found')
+        }
+    })
+})
+
+
+#post
+const common = require("../common/commonfunc")
+const fs = require("fs")
+var should = require('chai').should()
+const regedit = require('regedit')
+
+let testSet = fs.readFileSync(__dirname + '\\testCases_postBuild.json')
+testCases = JSON.parse(testSet)
+
+describe('Post build test cases', function () {
+    testCases.map((test) => {
+        switch (test.tcID) {
+            case "XXXXX01":
+                it(test.tcDescription, function () {
+                    regedit.list('HKLM\\SOFTWARE\\Microsoft\\NET Framework Setup\\NDP\\v3.5', function(err, result) {
+                        var installValue = result['HKLM\\SOFTWARE\\Microsoft\\NET Framework Setup\\NDP\\v3.5'].values['Install'].value
+                        console.log("Install= " + installValue)
+                        installValue.should.be.equal(1)
+                    })
+
+                    regedit.list('HKLM\\SOFTWARE\\Microsoft\\NET Framework Setup\\NDP\\v3.5', function(err, result) {
+                        var installPathValue = result['HKLM\\SOFTWARE\\Microsoft\\NET Framework Setup\\NDP\\v3.5'].values['InstallPath'].value
+                        console.log("Install Path= " + installPathValue)
+                        installPathValue.should.be.equal("C:\\windows\\Microsoft.NET\\Framework64\\v3.5\\")
+                    })
+                })
+                break
+            default:
+                console.log('No test found')
+        }
+    })
+})
+
+#
+[
+{
+  "tcID": "XXXXX01",
+  "flag": "",
+  "tcDescription": "Open a goto address",
+  "tcExpectedResult": "Success",
+  "screenShot": ""
+},
+{
+  "tcID": "XXXXX02",
+  "flag": "",
+  "tcDescription": "Use the default homepage",
+  "tcExpectedResult": "Success",
+  "screenShot": "",
+  "homepage" : "https://intranet.ubs.net/"
+},
+{
+  "tcID": "XXXXX03",
+  "flag": "",
+  "tcDescription": "Open an internet page",
+  "tcExpectedResult": "Success",
+  "screenShot": ""
+},
+{
+  "tcID": "XXXXX04_",
+  "flag": "",
+  "tcDescription": "Google chrome search bar",
+  "tcExpectedResult": "Success",
+  "screenShot": ""
+},
+{
+  "tcID": "XXXXX05",
+  "flag": "",
+  "tcDescription": "WebSSO window launching",
+  "tcExpectedResult": "Success",
+  "screenShot": "",
+  "homepage" : "https://intranet.ubs.net/"
+},
+{
+  "tcID": "XXXXX06",
+  "flag": "",
+  "tcDescription": "Make Chrome the Default",
+  "tcExpectedResult": "Success",
+  "screenShot": ""
+},
+{
+  "tcID": "XXXXX07",
+  "flag": "",
+  "tcDescription": "Chrome version",
+  "tcExpectedResult": "Success",
+  "screenShot": "",
+  "expectedChromeVersion" : "85"
+},
+{
+  "tcID": "XXXXX08_",
+  "flag": "",
+  "tcDescription": "Chrome default using registry check",
+  "tcExpectedResult": "Success",
+  "screenShot": ""
+}
+]
+
+#
+var fs = require('fs')
+var os = require('os');
+var { promisify } = require('util')
+const { spawn } = require("child_process");
+// const replace = require('replace-in-file');
+const path = require("path")
+const chromeVersion = require("find-chrome-version")
+
+const { v4: uuidv4 } = require('uuid');
+
+var arrayOffFiles = []
+var subFolderCount = 0
+var filesCount = 0
+
+//var uniqueID =  // ? '1b9d6bcd-bbfd-4b2d-9b5d-ab8dfbbd4bed'
+
+class common {
+
+    constructor(path, dirname, uniqueID = "") {
+        this.uniqueID = uuidv4();
+        this.path = path
+        this.dirname = dirname
+    }
+
+    runVBS() {
+        const enter = spawn("C:\\Windows\\System32\\wscript.exe", ["enter.vbs"]);
+    }
+    generateTestID() {
+        return this.uniqueID;
+    }
+
+    createDir() {
+
+        const directory = this.path;
+        console.log(directory)
+
+        if (!fs.existsSync(directory)) {
+            fs.mkdirSync(directory);
+
+        } else {
+            console.log("Directory already exist");
+        }
+    }
+    //FSLOgix
+
+    getAllFiles(pathFolder) {
+        var files = []
+
+        //  arrayOffFiles = arrayOffFiles || []
+
+        if (fs.existsSync(pathFolder)) {
+
+            files = fs.readdirSync(pathFolder)
+        }
+
+        files.forEach(file => {
+
+            if (fs.statSync(pathFolder + "/" + file).isDirectory()) {
+                arrayOffFiles.push(path.join(__dirname, pathFolder, "/", file))
+                this.getAllFiles(pathFolder + "/" + file)
+                subFolderCount = subFolderCount + 1
+
+            } else {
+                filesCount = filesCount + 1
+                arrayOffFiles.push(path.join(__dirname, pathFolder, "/", file))
+
+            }
+        })
+
+        return arrayOffFiles
+        //eturn found
+
+    }
+
+    fxlogixAction(pathFolder, action) {
+        var arrayOffFiles = []
+        var files = []
+        var found = false
+        var result = []
+
+        try {
+            if (fs.existsSync(pathFolder)) {
+                found = true
+                files = fs.readdirSync(pathFolder)
+                files.forEach(file => {
+                    if (fs.statSync(pathFolder + "/" + file).isDirectory() && action.type === 'FOLDER') {
+
+                        if (action.value.toString().toLowerCase() === file.toString().toLowerCase()) {
+                            found = true
+                            arrayOffFiles.push(path.join(__dirname, pathFolder, "/", file))
+                            arrayOffFiles = this.getAllFiles(pathFolder + "/" + file)
+                        }
+
+                    }
+
+                })
+            }
+        }
+        catch (e) {
+
+        }
+
+        result.push(found)
+        result.push(subFolderCount)
+        result.push(filesCount)
+        result.push(arrayOffFiles)
+
+        return result
+
+    }
+
+    createFile(fileName) {
+        // 
+
+        var htmlContent = `
+        <html><head><title>Cloud DevDesktop Test Automation Report</title>
+        <body>
+        <table bordercolor=#99ccff border=1 cellpadding=3 cellspacing=3 style=font-family:arialfont-size:x-small width=60% align=center>
+        <TH colspan=2 bgcolor = #F0F8FF><FONT COLOR=#000000><B><I>DevDesktop TEST AUTOMATION</I></B></TH></FONT>
+        <tr>
+        <td bgcolor=C0C0C0><B>Test Scope</B></td>
+        <td>DevDesktop Build Level Testing</td>
+        </tr>
+        <tr><td bgcolor=C0C0C0><B>Date</B></td>
+        <td>${new Date()}</td>
+        </tr><tr>
+         <td bgcolor=C0C0C0><B>Host OS</B></td>
+         <td>${os.type}</td>
+          </tr>
+           <tr>
+           <td bgcolor=C0C0C0><B>Host Name</B></td>
+            <td>${os.hostname()}</td>
+            </tr>
+            <tr>
+            <td bgcolor=C0C0C0><B>User Name</B></td>
+            <td>  ${os.userInfo().username} </td>
+            <tr>
+            <td bgcolor=C0C0C0><B>Start Time</B></td>
+             <td> ${new Date().getTime()} </td>
+            </tr>
+            <tr>
+            <td bgcolor=C0C0C0><B>End Time</B></td>
+             <td> ${new Date().getTime()} </td>
+            </tr>
+            <P><br><table bordercolor=#99ccff  border=1 cellpadding=1 cellspacing=1 style=font-family:arialfont-size:x-small width=100% align=center>
+            <TH colspan=6 bgcolor = #F0F8FF><FONT COLOR=#000000><B><I>DETAILED EXECUTION REPORT(S)</I></B></TH></FONT>
+            <TR><TD align=left bgcolor=C0C0C0 ><font size=2+ color=blue><B><I>Test Case ID</I></B></Font></TD>
+            <TD align=left bgcolor=C0C0C0 ><font size=2+ color=blue><B><I>Test Scenario</I></B></Font></TD>
+             <TD align=left bgcolor=C0C0C0 ><font size=2+ color=blue><B><I>Expected Result</I></B></Font></TD>
+             <TD align=center bgcolor=C0C0C0><font size=2+ color=blue><B><I>Actual Result</I></B></font></TD>
+              <TD align=center bgcolor=C0C0C0><font size=2+ color=blue><B><I>Screen</I></B></font></TD>
+              <TD align=center bgcolor=C0C0C0><font size=2+  color=blue><B><I>STATUS</I></B></TD></font></TR>
+              `;
+
+        console.log(this.path + "\\" + fileName)
+        fs.writeFile(this.path + "\\" + fileName + ".html", htmlContent, (error) => { /* handle error */ })
+
+        //create JSON
+    }
+    // let current_datetime = new Date();
+    // let formatted_date = current_datetime.getDate() + "-" + (current_datetime.getMonth() + 1) + "-" + current_datetime.getFullYear();
+    // const dirPath = "D:\\test-help\\" + formatted_date
+
+    create_report_body(fileName, tcFlag, tcID, tcDescription, tcExpectedResult, tcActualResult, screenShot) {
+        var outputTxt;
+        switch (tcFlag) {
+
+            case "PASSED":
+                outputTxt = `
+        <tr>
+        <td>${tcID}</td>
+        <td>${tcDescription}</td>
+        <td>${tcExpectedResult}</td>
+        <td>${tcActualResult}</td>
+        <td>${screenShot}</td>
+        <td><font color='green'>${tcFlag}</font></td>
+        
+        </tr>
+        `;
+
+                break;
+            case "FAILED":
+                outputTxt = `
+            <tr>
+            <td>${tcID}</td>
+            <td>${tcDescription}</td>
+            <td>${tcExpectedResult}</td>
+            <td>${tcActualResult}</td>
+            <td>${screenShot}</td>
+            <td><font color='red'>${tcFlag}</font></td>
+            
+            </tr>
+            `;
+                break;
+            case "ERROR":
+                break;
+            case "NORUN":
+                break;
+            default:
+                console.log('logging')
+        }
+        fs.appendFile(this.path + "\\" + fileName + ".html", outputTxt, (error) => { /* handle error */ })
+        this.createJSON(this.path + "\\" + fileName + ".json", tcFlag, tcID, tcDescription, tcExpectedResult, tcActualResult, screenShot)
+    }
+
+    //create JSON
+    async createJSON(fileName, tcFlag, tcID, tcDescription, tcExpectedResult, tcActualResult, screenShot) {
+        let testData = {
+            tcID: tcID,
+            flag: tcFlag,
+            tcDescription: tcDescription,
+            tcExpectedResult: tcExpectedResult,
+            screenShot: screenShot
+        };
+
+        // fs.readFile(this.path + "\\" + "results.json", 'utf-8', function(err, data) {
+        //     if (err) throw err;
+
+        //     var newValue = data.replace(/aaaa/gim, 'name');
+
+        //     fs.writeFile(this.path + "\\" + "results.json", newValue, 'utf-8', function(err, data) {
+        //         if (err) throw err;
+        //         console.log('Done!');
+        //     })
+        // })
+
+        // const options = {
+        //     files: this.path + "\\" + "results.json",
+        //     from: /aaaa/g,
+        //     to: 'sssssssssss',
+        // };
+
+        // if (fs.existsSync(this.path + "\\" + fileName + ".json")) {
+        //console.log(fileName)
+        if (fs.existsSync(fileName)) {
+            fs.readFile(fileName, 'utf8', function (err, fileData) {
+                //console.log("Exists")
+                if (err) {
+                    console.log(er)
+                }
+                else {
+                    var resultObj = JSON.parse(fileData);
+                    resultObj.push(testData);
+                    let data = JSON.stringify(resultObj, null, 2);
+                    fs.writeFileSync(fileName, data, 'utf8', function (err) {
+                        if (err) throw err;
+                        console.log('Data written to file');
+
+                    });
+                    //const sleep = promisify (5)
+                }
+
+            });
+
+        } else {
+            //console.log("Not exist")
+            let data = JSON.stringify(testData, null, 2);
+            fs.writeFileSync(fileName, "[" + data + "]", function (err) {
+                if (err) throw err;
+                //console.log('Data written to file');
+                //console.log("Directory already exist");
+            });
+
+            // fs.close(this.path + "\\" + fileName + ".json", function (err) {
+            //     if (err) throw err;
+            //     //console.log('Data written to file');
+            //     //console.log("Directory already exist");
+            // });
+
+            // fs.readFile(this.path + "\\" + fileName + ".json", 'utf8', function (err, fileData) {
+            //     if (err) {
+            //         console.log(er)
+            //     }
+            //     else {
+            //         resultObj = JSON.parse(fileData);
+            //         resultObj.push(testdata);
+            //         let data = JSON.stringify(resultObj, null, 2);
+            //         fs.writeFile(this.path + "\\" + fileName + ".json", data, { flag: 'a' }, function (err) {
+            //             if (err) throw err;
+            //             console.log('Data written to file');
+            //         });
+            //     }
+
+            // });
+
+        }
+
+        //fs.writeFileSync(this.path + "\\" + "results.json", data);
+
+    }
+    async ch() {
+
+        return await chromeVersion()
+
+    }
+    getChromeVersion() {
+        const latestVersion = "NO"
+        const version = this.ch()
+        version.then((result) => {
+            latestVersion = result
+        })
+
+        return latestVersion
+    }
+}
+
+
+killRunningTask = async (taskName) => {
+    console.log("Executing " + taskName + " closing..")
+
+    var spawn = require("child_process").spawn, child;
+    var command = "taskkill /IM \"" + taskName + "\" /F"
+    child = spawn("powershell.exe", ["-noexit", command]);
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    child.stdout.on("data", function (data) {
+        console.log("Powershell Data: " + data);
+    });
+    child.stderr.on("data", function (data) {
+        console.log("Powershell Errors: " + data);
+    });
+    child.on("exit", function () {
+        console.log("Powershell Script finished");
+    });
+    child.stdin.end(); //end input
+}
+
+killRunningTaskPromise = (taskName) => {
+    return new Promise(resolve => {
+        console.log("Executing " + taskName + " closing..")
+
+        var spawn = require("child_process").spawn, child;
+        var command = "taskkill /IM \"" + taskName + "\" /F"
+        child = spawn("powershell.exe", ["-noexit", command]);
+        later(2000).then((data)=>{
+            child.stdout.on("data", function (data) {
+                console.log("Powershell Data: " + data);
+            });
+            child.stderr.on("data", function (data) {
+                console.log("Powershell Errors: " + data);
+            });
+            child.on("exit", function () {
+                console.log("Powershell Script finished");
+            });
+            child.stdin.end();
+            resolve(true);
+        });
+    });
+}
+
+function later(delay) {
+    return new Promise(function(resolve) {
+        setTimeout(resolve, delay);
+    });
+}
+
+
+//let fileName = current_datetime.getFullYear() + "-" + (current_datetime.getMonth() + 1) + "-" + current_datetime.getDate() + " " + current_datetime.getHours() + ":" + current_datetime.getMinutes() + ":" + current_datetime.getSeconds() + ".html"
+
+// let fileNameTxt = current_datetime.getDate()  + "-" + (current_datetime.getMonth()+1) + "-" + current_datetime.getFullYear() + "-" + current_datetime.getHours() + "-" + current_datetime.getMinutes() + "-" + current_datetime.getSeconds() + ".html";
+// //var path = String("D:/test-help", formatted_date);
+// console.log(dirPath )
+
+// createDir(dirPath, formatted_date);
+
+// var testID = generateTestID()
+
+// console.log(testID)
+
+// var testID = generateTestID()
+
+// console.log(testID)
+
+// createFile(dirPath, fileNameTxt, "dateTime", "browserName")
+
+module.exports = common;
+
+
+#
+var fs = require('fs')
+
+var fileName = "22-5-2020-15-24-18.json"
+
+console.log(fileName)
+
+if (fs.existsSync(fileName)) {
+    console.log("E")
+    fs.readFile(fileName, 'utf8', function (err, fileData) {
+        console.log("Exists")
+        if (err) {
+            console.log(er)
+        }
+        else {
+            var resultObj = JSON.parse(fileData);
+            resultObj.forEach(element => {
+                console.log(element.tcID)
+                
+            });
+           //console.log(resultObj)
+        }
+
+    });
+
+
+} 
+
+#
+
