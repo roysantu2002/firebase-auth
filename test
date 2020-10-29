@@ -1,478 +1,613 @@
-#driver
---------
+#set_env
 
-. ..\utils\vmApi.ps1
+$tc_100_result  = ""
+function verifyRegistryFolder{
+    param (
 
-$KEY_VAULT = "kv-ddg01-neu-test"
-$SECRET_SECURE = "dd-cmdb-vmstate-orchestration-url"
-$KEY_VAULT_RG = "rg-ddg01-neu-test-mngmt"
-# $SECRET_SECURE 
-
-$NUM = Get-Random -Maximum 99
-$PREFIXONE = ((65..90) + (97..122) | Get-Random -Count 1 | % {[char]$_}) 
-$PREFIXTWON = ((65..90) + (97..122) | Get-Random -Count 1 | % {[char]$_})
-$PREFIXTHREE = ((65..90) + (97..122) | Get-Random -Count 1 | % {[char]$_}) 
-$VMPREFIX = "DDG-TANG-" + $PREFIXONE + $PREFIXTWON + $PREFIXTHREE
-$waitCount = 1
-while($waitCount -lt 5){
-                    
-        $url = az keyvault secret show --name $SECRET_SECURE --vault-name $KEY_VAULT --query value -o tsv
-        $urlArray = $url.Split("?")
-        $BASE_URL = $urlArray[0]
-        $CODE =  $urlArray[1]
-        if(!$null -eq $CODE )
-        {
-            Write-Host 'No retry required for Keyvault Code'
-            break
-        }
-        else{
-            $waitCount +=1
-            Write-Host 'Error getting the Keyvault Code'
-            Write-Host "Function Apps url: "  $url
-            Write-Host "Waiting :" $waitCount
-        }
+        [parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]$Path
+    )
+    return Test-Path -Path $Path
 }
-
-$VMFOUND = $false
-$VMSTATUS = ""
-
-
-$RUN_COMMAND_URL = $BASE_URL+"/VMRunCommandWorkflow?"+$CODE
-$CREATE_VM_URL = $BASE_URL+"/CreateVirtualMachineWorkflow?"+$CODE
-$JOIN_DOMAIN_URL = $BASE_URL + "/JoinDomainWorkflow?"+$CODE
-$APPLY_LICENSE_URL = $BASE_URL + "/ApplyLicenseWorkflow?"+$CODE
-$EXP_DATE_URL = $BASE_URL + "/ExtendExpirationDateWorkflow?"+$CODE
-$CREATE_DESKTOP_URL = $BASE_URL + "/desktops?"+$CODE
-
-
-# $VM_NAME = $env:COMPUTERNAME
-
-$VM_NAME = "DDG-TANG-ZNP-9S"
-
-$EXP_DATE = "2020-12-21T23:00:00.000Z"
-
-
-# $VM_NAME = "DDG-TANQ-SR-01" #"dtest01-Utkarsh"
-
-$RESOURCE_GROUP = "rg-ddg-test01-weu-test" #"rg-ddg-test01-weu-test" #"rg-ddg-chk0-neu-prod" #"rg-ddg-team0-neu-prod" #"rg-ddg-test01-weu-test" #
-$RESOURCEID =  "rg-ddg-test01-weu-test" #"rg-ddg-test01-weu-test" #"rg-ddg-test01-weu-test"
-$SUBSCRIPTION = "ba-ise-ddg01-eu-appdev"
-$SUBSCRIPTION_ID = "e30f1618-a35d-4a9a-88a1-82057c28c331"
-$LABNAME = "ddg-test01-weu-test" #"ddg-test01-weu-test" #"ddg-team0-neu-prod" #"ddg-test01-weu-test" 
-$LAB_ID = "ddg-test01-weu-test" #"ddg-test01-weu-test" #"ddg-chk0-neu-prod" #"ddg-test01-weu-test" #"ddg-team0-neu-prod"
-
-#----Other details
-$MAX_DURATION = 2
-$SCRIPT = "echo hello world \n echo hello world"
-$DOMAIN_FQDN = "UBSCLOUD-PROD.msad.ubs.net"
-$DOMAIN_USER_NAME = "santu.roy@ubs.com"
-$OUPATH = "" 
-
-
-$NUM = Get-Random -Maximum 99
-$PREFIXONE = ((65..90) + (97..122) | Get-Random -Count 1 | % {[char]$_}) 
-$PREFIXTWON = ((65..90) + (97..122) | Get-Random -Count 1 | % {[char]$_})
-$PREFIXTHREE = ((65..90) + (97..122) | Get-Random -Count 1 | % {[char]$_}) 
-
-$VMPREFIX = "DDG-TANG-" + $PREFIXONE + $PREFIXTWON + $PREFIXTHREE
-
-$VMFOUND = $false
-$VMSTATUS = ""
-
-$RUN_COMMAND_URL = $BASE_URL+"/VMRunCommandWorkflow?"+$CODE
-$CREATE_VM_URL = $BASE_URL+"/CreateVirtualMachineWorkflow?"+$CODE
-$JOIN_DOMAIN_URL = $BASE_URL + "/JoinDomainWorkflow?"+$CODE
-$APPLY_LICENSE_URL = $BASE_URL + "/ApplyLicenseWorkflow?"+$CODE
-$ADD_USER_URL = $BASE_URL + "/AddUserToVmWorkflow?"+$CODE 
-# $VM_NAME = $env:COMPUTERNAME
-
-# $VM_NAME = "dtest01-Utkarsh"
-# $USER_UPN = "andrew.numa@ubs.com"
-# $RESOURCE_GROUP = "rg-ddg-test01-weu-test" #"rg-ddg-team0-neu-prod"
-# $RESOURCEID = "rg-ddg-test01-weu-test" #"rg-ddg-team0-neu-prod"
-$SUBSCRIPTION = "ba-ise-ddg01-eu-appdev"
-$SUBSCRIPTION_ID = "e30f1618-a35d-4a9a-88a1-82057c28c331"
-$MAX_DURATION = 2
-$SCRIPT = "echo hello world \n echo hello world"
-$DOMAIN_FQDN = "UBSCLOUD-PROD.msad.ubs.net"
-$DOMAIN_USER_NAME = "santu.roy@ubs.com"
-$OUPATH = "" 
-# $LABNAME = "ddg-team0-neu-prod"
-
-#Variables for desktop
-$USERUPNS = "['santu.roy@ubs.com']"
-$PKG_SETS = "['developer-core']"
-
-#----runner
-Invoke-Pester -Script @{Path='.\createVMTests.ps1'}  -OutputFormat NUnitXml -OutputFile .\createVMTests.xml
-
-#----Creatr vm
-
-# param (
-#     [parameter(Mandatory = $true)]
-#     [ValidateNotNullOrEmpty()]$BASE_URL
-# )
-
-. .\driver.ps1
-. ..\utils\vmApi.ps1
-. ..\utils\createvmApi.ps1
-. ..\data\testdata.ps1
-
-Describe "Given az cli login" {
-
-    $testCases = Get-Content -Raw -Path "..\testCases\vm.json" | ConvertFrom-JSON
-
-    Context "Create VM workflow" {
-
-        Write-Host "VMPREFIX:" $VMPREFIX.ToUpper()
-
-        foreach ($test in $testCases) {
-
-            # $validURL = $BASE_URL.toString() -match "http"
-            # if($validURL -eq $False){
-            #     Write-Host 'Invalid URL'
-            #     Exit
-            # }else{ $CREATE_VM_URL = $BASE_URL + "api/orchestrators/CreateVirtualMachineWorkflow"}
-
-            # if($test.vm -eq ""){
-            #     $vm = $env:COMPUTERNAME
-            # }
-            # else{
-            #     $vm = $test.vm
-            # }
-            
-            switch ($test.id) {
-
-                "00 createvm"{
-                    if($test.data -eq $True){
-                          It ($test.id) {
-                            $flag = $false
-                            $result = createvmAPI $CREATE_VM_URL $SUBSCRIPTION_ID $RESOURCEID $LAB_ID $VMPREFIX.ToUpper() $USERUPN $MACHINESIZE
-                            Write-Host "Create VM Still: " $result
-
-                            #Testing
-                            # $result = 'Running'
-                            # $VM_NAME = "DDG-TANQ-SRT-G4"
-                            if(($result -eq "Running") -or ($result -eq "Completed"))
-                            {
-                                $flag = $true
-                                $VM_NAME = getVMName $RESOURCEID $VMPREFIX
-                                Write-Host "VM :" $VM_NAME 
-                                if($VM_NAME -ne "NA"){
-                                    $VM_NAME.ToUpper() | Out-File -FilePath ".\vmname.txt" -Append
-                                    # Add-Content .\'vmname.txt' $VM_NAME
-                                }else{ $VMPREFIX.ToUpper() | Out-File -FilePath ".\vmname.txt"  -Append}
-                                $flag | Should be $True
-                            }
-                            
-                            }
-                          }
-                
-                }# End of create vm
-
-                "07 vm exists" {
-                    if ($test.enabled -eq $True) {
-                        It ($test.id) {
-                            $flag = $False
-                            $VM_NAME =   $VM_NAME = getVMName $RESOURCEID $VMPREFIX
-                            Write-Host "VM Name: " $VM_NAME
-                            if($VM_NAME -ne "NA"){
-                                #$flag = vmExists $RESOURCEID $VM_NAME
-                                $flag = vmExists $VM_NAME
-                            }
-                            $flag | Should be $True
-                           
-                        }
-                    }
-                } #end of 00
-
-                "000001 rg exists" {
-                    if ($test.enabled -eq $True) {
-                        It ($test.id) {
-                            $flag = $False
-                            $flag = rgExists $RESOURCEID
-                            $flag | Should be $True
-                           
-                        }
-                    }
-                } 
-
-                "00002 vm location" {
-                    if ($test.enabled -eq $True) {
-                        It ($test.id) {
-                            $flag = $False
-                            $location = vmLocation $RESOURCEID $vm
-                            if($location -eq $test.tcExpectedResult){
-                                $flag = $True
-                            }
-                            $flag | Should be $True
-                           
-                        }
-                    }
-                } 
-        
-     
-
-            }
-        }
-    }
-
-
-}
-
-#---vm api
-function createvmAPI {
+function Test-RegistryValue {
 
     param (
+
         [parameter(Mandatory = $true)]
-        [ValidateNotNullOrEmpty()]$CREATE_VM_URL, $SUBSCRIPTION_ID, $RESOURCEID, $LAB_ID, $VMPREFIX, $USERUPN, $MACHINESIZE
+        [ValidateNotNullOrEmpty()]$Path,
+
+        [parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]$Value
     )
 
-    $url = $CREATE_VM_URL
-    $resourceId = $RESOURCEID
-    $labId = "/subscriptions/"+$SUBSCRIPTION_ID+"/resourcegroups/"+$RESOURCEID+"/providers/microsoft.devtestlab/labs/"+$LAB_ID
-    $vmPrefix = $VMPREFIX
-    # $vmName = $VMNAME
-    $userUpn = $USERUPN
-    $machineSize = $MACHINESIZE
-    # $subnetName = $SUBNET
-
-    Write-Host "labid:" $labId
-    $bodyContent = '{{
-    "labId":"{0}",
-    "vmPrefix":"{1}",
-    "userUpn":"{2}",
-    "machineSize":"{3}"
-}}' -f $labId, $vmPrefix, $userUpn, $machineSize
-
-    $body = '{
-    "resourceId": "/subscriptions/"f9632259-8c0f-4e06-a435-b049084f346b/resourcegroups/rg-az-devtestlabs-neu-local-008/providers/microsoft.devtestlab/labs/dtl-dd-lab-008-neu-eng/virtualmachines/lab008create010",
-    "labId" : "rg-az-devtestlabs-neu-local-008",
-    "vmPrefix" : "san",
-    "vmName": "royvmXXX001",
-    "userUpn": "santu.roy@ubsdev.com",
-    "machineSize": "Standard_D3_v2",
-    "subnetName": "user-0001"
-}'
-
-#'http://localhost:7071/api/orchestrators/CreateVirtualMachineWorkflow'
-
-    $param = @{
-        Uri         =  $url
-        Method      = 'POST'
-        Body        = $bodyContent 
-        ContentType = 'application/json'
-    }
-
-    $output = ""
-
-    Write-Host "url: " $url
-    Write-Host "func app url print" $url
-    # Write-Host "Body :" @param
     try {
-        #  $result = Invoke-RestMethod -Method 'Post' -Uri $url -Body $bodyContent
-        $result = Invoke-RestMethod @param
-        $startTime = $(get-date)
-        Write-host "Invoke-RestMethod:00:00:00"   
-        $startTime = Get-Date -Format "dddd MM/dd/yyyy HH:mm K"
-        Write-Host "StartTime:" $startTime
-        Start-Sleep -s 30
-        Write-Host "Wait....."
-        $statusQueryGetUri = $result.statusQueryGetUri 
-        Write-Host "statusQueryGetUri: "  $statusQueryGetUri
-        if(!$null -eq  $statusQueryGetUri){
 
-            $statusURLResponse = Invoke-WebRequest -URI $statusQueryGetUri
-            $rs = $statusURLResponse.Content | ConvertFrom-Json
-            $runtimeStatus = $rs.runtimeStatus
-
-            $waitCount = 1
-            while($waitCount -lt 25){
-                if($runtimeStatus -eq "Running"){
-
-                    Start-Sleep -s 30
-                    $elapsedTime = new-timespan $startTime $(get-date)
-                    write-host "Elapsed:$($elapsedTime.ToString("hh\:mm\:ss"))"  
-
-                    $statusURLResponse = Invoke-WebRequest -URI $statusQueryGetUri
-                    $rs = $statusURLResponse.Content | ConvertFrom-Json
-                    $runtimeStatus = $rs.runtimeStatus
-                    #Write-Host "Wait Counter: " $waitCount
-                    $waitCount +=1
-                }
-                if($runtimeStatus -eq "Failed")
-                {
-                    $runtimeStatus = "Failed"
-                    Write-Host "Wait Counter: " $waitCount
-                    break
-                }
-                if($runtimeStatus -eq "Completed")
-                {
-                    $runtimeStatus = "Completed"
-                    Write-Host "Completed: " Completed
-                    break
-                }
-            }
-            $endTime = Get-Date -Format "dddd MM/dd/yyyy HH:mm K"
-
-            Write-Host "EndTime:" $endTime
-        }
+        $c = 0
+        Get-Item -Path $Path | Select-Object -ExpandProperty property | % { if ($_ -match $Value) { $c = 1 ; return $true } }
+        if ($c -eq 0) { return $false }
     }
-    catch { 
-        Write-Host $_.Exception.Message
-        $output = "ERR"
-     }
-    return $runtimeStatus 
+
+    catch {
+
+        return $false
+
+    }
+
 }
 
+function PathExists {
+    param(
+        [parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]$Path
+    )
+    return Test-Path -Path $Path
+}
 
-#---
+function VerifyEnvironmentVariable {
+    param (
+
+        [parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]$Name,
+
+        [parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]$Value
+    )
+
+    try {
+        $c = 0;
+        $count = 0;
+        #Verify if the variable exists
+        $count = (Get-ChildItem -Path "ENV:\$Name").Count
+        if ($count -eq 0) { return $false }
+
+        #If exists, verify Value
+        (Get-ChildItem -Path "ENV:\$Name").Value | % { if ($_ -eq $Value) { $c = 1 ; return $true } }
+        if ($c -eq 0) { return $false }
+     
+    }
+    catch {
+        Write-Output "Inside Catch"
+        return $false
+    }
+}
+
+Describe "Verify Tasks performed by SetEnv.ps1" {
+
+    $testCases = Get-Content -Raw -Path ".\SetEnvTestCases.json" | ConvertFrom-JSON
+    $ENV_NAME = "ENG"
+    $ubs_path = "C:\UBS exists"
+    $ubs_logs_path = "C:\ProgramData\UBS\Logs"
+    $ubs_msiexec_path = "C:\ProgramData\UBS\Logs\msiexec"
+    $software_reg_path = "HKLM:\SOFTWARE\UBS\"
+    $machineConfigData_path = "HKLM:\SOFTWARE\UBS\MachineConfigData"
+    $data_path = "HKLM:\SOFTWARE\UBS\MachineConfigData\data"
+    $build_path = "HKLM:\SOFTWARE\UBS\Build"
+
+    $transmitPath = "HKLM:\SOFTWARE\Transmit"
+    $default = "\AuthServerConnections\default"
+    $branding = "\TransmitPolicyClient\Branding"
+
+    $branding_path = "C:\Windows\System32\TransmitBranding"
+    $transmit_path = "HKLM:\SOFTWARE\Transmit"
+    $tc_100_result = ""
+
+    foreach ($test in $testCases) {
+        
+        Write-Host $test.enabled
+        switch ($test.id) {
+        
+            "01" {
+
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription) {
+                        $testpath = PathExists -Path $ubs_path
+                        Write-Host $testpath
+                        $testpath | should be $true
+                    }
+                }
+            }
+            "02" {
+
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription){
+                        $testpath = PathExists -Path $ubs_logs_path
+                        Write-Host $testpath
+                        $testpath | should be $true
+                    }
+                }
+            
+            }
+
+            "03" {
+
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription) {
+                        $testpath = PathExists -Path $ubs_msiexec_path
+                        Write-Host $testpath
+                        $testpath | should be $true
+                    }
+                }
+            }
+            "04" {
+
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription) {
+                            $result = Test-Path $software_reg_path 
+                            $result | should be $true
+                    }
+                }
+            }
+            "05" {
+
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription) {
+                            $result = Test-Path $machineConfigData_path 
+                            $result | should be $true
+                    }
+                }
+            
+            }
+
+            "06" {
+
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription) {
+                            $result = Test-Path $data_path
+                            $result | should be $true
+                    }
+                }
+            
+            }
+
+            "07" {
+
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription) {
+                            $result = Test-Path $build_path
+                            $result | should be $true
+                    }
+                }
+            
+            }
+
+            "080" {
+
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription) {
+                            $result = Test-Path $transmit_path
+                            $result | should be $true
+                    }
+                }
+            
+            }
+
+            "090"{
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription){
+                    $tansmit= verifyRegistryFolder -Path $transmitPath
+                    Write-Host $transmitPath$default
+        
+                    if ( $tansmit -eq $True){
+                        $AuthServerUrl = Test-RegistryValue -Path $transmitPath$default -Value 'AuthServerUrl'
+                        #Write-Host $AuthServerUrl
+                        if($AuthServerUrl -eq $True)
+                        {
+                            $result = (Get-ItemProperty -Path HKLM:\SOFTWARE\Transmit\AuthServerConnections\default -Name AuthServerUrl).AuthServerUrl
+                            #Write-Host $result
+                            $result | should be 'https://transmit.ubs.net'
+                        }
+                    }
+                }
+            }
+            }
+
+            "091"{
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription){
+                    $tansmit= verifyRegistryFolder -Path $transmitPath
+                    #Write-Host $transmitPath$branding
+        
+                    if ( $tansmit -eq $True){
+                        $BrandingJson = Test-RegistryValue -Path $transmitPath$branding -Value 'Branding'
+                        #Write-Host $AuthServerUrl
+                        if($BrandingJson -eq $True)
+                        {
+                            $result = (Get-ItemProperty -Path HKLM:\SOFTWARE\Transmit\AuthServerConnections\default -Name Stylesheet).Stylesheet
+                            Write-Host $result
+                            $result | should be 'TransmitStyles.json'
+                        }
+                    }
+                }
+            }
+            }
+
+            "100" {
+
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription) {
+                            $result = Test-Path $branding_path
+                            $tc_100_result = $result
+                            $result | should be $true
+                    }
+                }
+            }
+
+            "101" {
+
+                if ($test.enabled -eq $True) {
+                 
+                    # if$(tc_100_result -eq $True){
+                        It ($test.tcDescription) {
+                        $result = (Get-ChildItem  -Path C:\Windows\System32\TransmitBranding | Measure-Object).Count
+                        $result | should be 13
+                  
+                    # }
+                }
+                }
+            }
+
+        }
+    }
+
+
+}
+
+#set
+$tc_100_result  = ""
+function verifyRegistryFolder{
+    param (
+
+        [parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]$Path
+    )
+    return Test-Path -Path $Path
+}
+function Test-RegistryValue {
+
+    param (
+
+        [parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]$Path,
+
+        [parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]$Value
+    )
+
+    try {
+
+        $c = 0
+        Get-Item -Path $Path | Select-Object -ExpandProperty property | % { if ($_ -match $Value) { $c = 1 ; return $true } }
+        if ($c -eq 0) { return $false }
+    }
+
+    catch {
+
+        return $false
+
+    }
+
+}
+
+function PathExists {
+    param(
+        [parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]$Path
+    )
+    return Test-Path -Path $Path
+}
+
+function VerifyEnvironmentVariable {
+    param (
+
+        [parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]$Name,
+
+        [parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]$Value
+    )
+
+    try {
+        $c = 0;
+        $count = 0;
+        #Verify if the variable exists
+        $count = (Get-ChildItem -Path "ENV:\$Name").Count
+        if ($count -eq 0) { return $false }
+
+        #If exists, verify Value
+        (Get-ChildItem -Path "ENV:\$Name").Value | % { if ($_ -eq $Value) { $c = 1 ; return $true } }
+        if ($c -eq 0) { return $false }
+     
+    }
+    catch {
+        Write-Output "Inside Catch"
+        return $false
+    }
+}
+
+Describe "Verify Tasks performed by SetEnv.ps1" {
+
+    $testCases = Get-Content -Raw -Path ".\SetEnvTestCases.json" | ConvertFrom-JSON
+    $ENV_NAME = "ENG"
+    $ubs_path = "C:\UBS exists"
+    $ubs_logs_path = "C:\ProgramData\UBS\Logs"
+    $ubs_msiexec_path = "C:\ProgramData\UBS\Logs\msiexec"
+    $software_reg_path = "HKLM:\SOFTWARE\UBS\"
+    $machineConfigData_path = "HKLM:\SOFTWARE\UBS\MachineConfigData"
+    $data_path = "HKLM:\SOFTWARE\UBS\MachineConfigData\data"
+    $build_path = "HKLM:\SOFTWARE\UBS\Build"
+
+    $transmitPath = "HKLM:\SOFTWARE\Transmit"
+    $default = "\AuthServerConnections\default"
+    $branding = "\TransmitPolicyClient\Branding"
+
+    $branding_path = "C:\Windows\System32\TransmitBranding"
+    $transmit_path = "HKLM:\SOFTWARE\Transmit"
+    $tc_100_result = ""
+
+    foreach ($test in $testCases) {
+        
+        Write-Host $test.enabled
+        switch ($test.id) {
+        
+            "01" {
+
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription) {
+                        $testpath = PathExists -Path $ubs_path
+                        Write-Host $testpath
+                        $testpath | should be $true
+                    }
+                }
+            }
+            "02" {
+
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription){
+                        $testpath = PathExists -Path $ubs_logs_path
+                        Write-Host $testpath
+                        $testpath | should be $true
+                    }
+                }
+            
+            }
+
+            "03" {
+
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription) {
+                        $testpath = PathExists -Path $ubs_msiexec_path
+                        Write-Host $testpath
+                        $testpath | should be $true
+                    }
+                }
+            }
+            "04" {
+
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription) {
+                            $result = Test-Path $software_reg_path 
+                            $result | should be $true
+                    }
+                }
+            }
+            "05" {
+
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription) {
+                            $result = Test-Path $machineConfigData_path 
+                            $result | should be $true
+                    }
+                }
+            
+            }
+
+            "06" {
+
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription) {
+                            $result = Test-Path $data_path
+                            $result | should be $true
+                    }
+                }
+            
+            }
+
+            "07" {
+
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription) {
+                            $result = Test-Path $build_path
+                            $result | should be $true
+                    }
+                }
+            
+            }
+
+            "080" {
+
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription) {
+                            $result = Test-Path $transmit_path
+                            $result | should be $true
+                    }
+                }
+            
+            }
+
+            "090"{
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription){
+                    $tansmit= verifyRegistryFolder -Path $transmitPath
+                    Write-Host $transmitPath$default
+        
+                    if ( $tansmit -eq $True){
+                        $AuthServerUrl = Test-RegistryValue -Path $transmitPath$default -Value 'AuthServerUrl'
+                        #Write-Host $AuthServerUrl
+                        if($AuthServerUrl -eq $True)
+                        {
+                            $result = (Get-ItemProperty -Path HKLM:\SOFTWARE\Transmit\AuthServerConnections\default -Name AuthServerUrl).AuthServerUrl
+                            #Write-Host $result
+                            $result | should be 'https://transmit.ubs.net'
+                        }
+                    }
+                }
+            }
+            }
+
+            "091"{
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription){
+                    $tansmit= verifyRegistryFolder -Path $transmitPath
+                    #Write-Host $transmitPath$branding
+        
+                    if ( $tansmit -eq $True){
+                        $BrandingJson = Test-RegistryValue -Path $transmitPath$branding -Value 'Branding'
+                        #Write-Host $AuthServerUrl
+                        if($BrandingJson -eq $True)
+                        {
+                            $result = (Get-ItemProperty -Path HKLM:\SOFTWARE\Transmit\AuthServerConnections\default -Name Stylesheet).Stylesheet
+                            Write-Host $result
+                            $result | should be 'TransmitStyles.json'
+                        }
+                    }
+                }
+            }
+            }
+
+            "100" {
+
+                if ($test.enabled -eq $True) {
+                    It ($test.tcDescription) {
+                            $result = Test-Path $branding_path
+                            $tc_100_result = $result
+                            $result | should be $true
+                    }
+                }
+            }
+
+            "101" {
+
+                if ($test.enabled -eq $True) {
+                 
+                    # if$(tc_100_result -eq $True){
+                        It ($test.tcDescription) {
+                        $result = (Get-ChildItem  -Path C:\Windows\System32\TransmitBranding | Measure-Object).Count
+                        $result | should be 13
+                  
+                    # }
+                }
+                }
+            }
+
+        }
+    }
+
+
+}
+
+#-----
 
 [
   {
-    "id": "00 createvm",
-    "data": true,
-    "enabled": true,
-    "vm": "DDG-TANQ-SR-01",
-    "resource": "RG-AZ-DEVTESTLABS-NEU-LOCAL-001",
-    "flag": "",
-    "tcDescription": "Echo Hello",
-    "tcExpectedResult": "succeed",
-    "screenShot": ""
-  },
-  {
-    "id": "001 CreateDevDesktop",
-    "data": true,
-    "enabled": true,
-    "vm": "DDG-TANQ-SR-01",
-    "resource": "RG-AZ-DEVTESTLABS-NEU-LOCAL-001",
-    "flag": "",
-    "tcDescription": "Echo Hello",
-    "tcExpectedResult": "succeed",
-    "screenShot": ""
-  },
-  {
-    "id": "07 vm exists",
-    "data": false,
-    "enabled": true,
-    "vm": "DDG-TANQ-SR-01",
-    "resource": "rg-ddg-team0-neu-prod",
-    "flag": "",
-    "tcDescription": "vm found",
-    "tcExpectedResult": true,
-    "screenShot": ""
-  },
+  "id": "01",
+  "enabled": true,
+  "flag": "",
+  "tcDescription": "If UBS Folder Exists in c: drive",
+  "tcExpectedResult": "True",
+  "screenShot": ""
+},
+{
+  "id": "02",
+  "enabled": true,
+  "tcDescription": "If Logs Folder Exists within UBS in c: drive",
+  "tcExpectedResult": "True",
+  "screenShot": ""
+},
 
-  {
-    "id": "001 rg exists",
-    "data": false,
-    "enabled": true,
-    "vm": "DDG-TANQ-SR-01",
-    "resource": "",
-    "flag": "",
-    "tcDescription": "rg found",
-    "tcExpectedResult": true,
-    "screenShot": ""
-  },
-  {
-    "id": "002 vm location",
-    "data": false,
-    "enabled": true,
-    "vm": "DDG-TANQ-SR-01",
-    "resource": "",
-    "flag": "",
-    "tcDescription": "",
-    "tcExpectedResult": "northeurope",
-    "screenShot": ""
-  },
 {
-  "id": "04 vmStatus",
-  "data": false,
+  "id": "03",
   "enabled": true,
-  "vm": "DDG-TANQ-SR-01",
-  "resource": "RG-AZ-DEVTESTLABS-NEU-LOCAL-001",
-  "flag": "",
-  "tcDescription": "vm status",
-  "tcExpectedResult": "running",
+  "tcDescription": "If msiexec Exists within Program Data in c: drive",
+  "tcExpectedResult": "True",
   "screenShot": ""
 },
 {
-  "id": "02 domainjoin",
-  "data": true,
-  "enabled": true,
-  "vm": "DDG-TANQ-SR-01",
-  "resource": "RG-AZ-DEVTESTLABS-NEU-LOCAL-007",
-  "flag": "",
-  "tcDescription": "domainjoin",
-  "tcExpectedResult": "UBSCloud-ENG.msad.ubseng.net",
-  "screenShot": ""
-},
-{
-  "id": "03 vmSize",
-  "data": false,
+  "id": "04",
   "enabled": false,
-  "vm": "DDG-TANQ-SR-01",
-  "resource": "RG-AZ-DEVTESTLABS-NEU-LOCAL-001",
-  "flag": "",
-  "tcDescription": "vmSize",
-  "tcExpectedResult": "Standard_B2ms",
+  "tcDescription": "Registry entry HKLM:\\SOFTWARE\\UBS\\ created",
+  "tcExpectedResult": "True",
+  "screenShot": ""
+},
+{
+  "id": "05",
+  "enabled": true,
+  "tcDescription": "Registry entry HKLM:\\SOFTWARE\\UBS\\MachineConfigData created",
+  "tcExpectedResult": "True",
+  "screenShot": ""
+},
+{
+  "id": "06",
+  "enabled": true,
+  "tcDescription": "Registry entry HKLM:\\SOFTWARE\\UBS\\MachineConfigData\\data created",
+  "tcExpectedResult": "True",
+  "screenShot": ""
+},
+{
+  "id": "07",
+  "enabled": true,
+  "tcDescription": "Registry entry HKLM:\\SOFTWARE\\UBS\\Build created",
+  "tcExpectedResult": "True",
+  "screenShot": ""
+},
+{
+  "id": "080",
+  "enabled": true,
+  "tcDescription": "Registry entry HKLM:\\SOFTWARE\\Transmit created",
+  "tcExpectedResult": "True",
   "screenShot": ""
 },
 
 {
-  "id": "05 localAdmin",
-  "data": false,
-  "enabled": false,
-  "vm": "santuroy001",
-  "resource": "RG-AZ-DEVTESTLABS-NEU-LOCAL-001",
-  "flag": "",
-  "tcDescription": "vm status",
-  "tcExpectedResult": "santu",
-  "screenShot": ""
-},
-{
-  "id": "06 cmdRunCommand",
-  "data": true,
+  "id": "081",
   "enabled": true,
-  "vm": "DDG-TANQ-SR-01",
-  "resource": "rg-ddg-team0-neu-prod",
-  "flag": "",
-  "tcDescription": "Echo Hello",
-  "tcExpectedResult": "succeed",
+  "tcDescription": "Registry entry HKLM:\\SOFTWARE\\Transmit\\TransmitPolicyClient\\Branding created",
+  "tcExpectedResult": "True",
   "screenShot": ""
 },
 
 {
-  "id": "08 addUser",
-  "data": true,
+  "id": "090",
   "enabled": true,
-  "vm": "DDG-TANQ-SR-01",
-  "resource": "RG-AZ-DEVTESTLABS-NEU-LOCAL-001",
-  "flag": "",
-  "tcDescription": "Echo Hello",
-  "tcExpectedResult": "succeed",
+  "tcDescription": "Transmit Authorisation Registry",
+  "tcExpectedResult": "True",
   "screenShot": ""
 },
+
 {
-  "id": "111 LicenseType",
-  "data": true,
+  "id": "091",
   "enabled": true,
-  "vm": "DDG-TANQ-SR-01",
-  "resource": "RG-AZ-DEVTESTLABS-NEU-LOCAL-007",
-  "flag": "",
-  "tcDescription": "vm license type",
-  "tcExpectedResult": "Windows_Client",
+  "tcDescription": "Transmit Brand Registry",
+  "tcExpectedResult": "True",
   "screenShot": ""
 },
+
 {
-  "id": "112 extendExpDate",
-  "data": true,
+  "id": "100",
   "enabled": true,
-  "vm": "dtest01-Utkarsh",
-  "resource": "RG-AZ-DEVTESTLABS-NEU-LOCAL-007",
-  "flag": "",
-  "tcDescription": "vm expiry date",
-  "tcExpectedResult": "",
+  "tcDescription": "Transmit Brand System Path",
+  "tcExpectedResult": "True",
+  "screenShot": ""
+},
+
+{
+  "id": "101",
+  "enabled": true,
+  "tcDescription": "Count Total files from Transmit Brand System Path",
+  "tcExpectedResult": "True",
   "screenShot": ""
 }
+
 ]
+
+#----------
+
