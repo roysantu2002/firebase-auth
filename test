@@ -1,1 +1,52 @@
 
+Write-Host "Begin Runner Script.."
+
+$currentPath = $PSScriptRoot
+$separator = [IO.Path]::DirectorySeparatorChar
+$projoinDomainTests = start-process pwsh "$($currentPath)$($separator)joinDomainTestsRunner.ps1"  -PassThru -RedirectStandardOutput 'joinDomainTests.log' -RedirectStandardError 'joinDomainTests.err' 
+
+$prolicenseTypeTests = start-process pwsh "$($currentPath)$($separator)licenseTypeTestsRunner.ps1"  -PassThru -RedirectStandardOutput 'prolicenseTypeTests.log' -RedirectStandardError 'prolicenseTypeTests.err' 
+
+$extendExpDateTests = start-process pwsh "$($currentPath)$($separator)extendExpDateTestsRunner.ps1"  -PassThru -RedirectStandardOutput 'extendExpDateTests.log' -RedirectStandardError 'extendExpDateTests.err' 
+
+$procreateVMTests = start-process pwsh "$($currentPath)$($separator)createVMTestsRunner.ps1" -PassThru -RedirectStandardOutput 'createVMTests.log' -RedirectStandardError 'createVMTests.err'
+
+$processes = @($procreateVMTests, $projoinDomainTests, $prolicenseTypeTests, $extendExpDateTests)
+
+Write-Host 'Waiting for processes to exit'
+$processes | Wait-Process
+
+$errFile = Get-ChildItem -Path $currentPath -recurse -filter  "*.err" |Select-Object Name, Length | Where Length -GT 0
+
+function WriteLogData {
+    param($testName)
+    
+    $filePath = "$($currentPath)$($separator)$($testName).log"
+    if (Test-Path $filePath) {
+        Write-Host "..$($testName)...."
+        Get-Content -Path $filePath
+    } else {
+        Write-Host "Log not found for $($filePath)"
+    }
+}
+
+if(!($null -eq $errFile)){
+    Write-Error 'processes exited with some errors' 
+    foreach ($file in  $errFile) {
+        Write-Error " File Name: $($file.Name)"
+        Get-Content -Path "$($currentPath)$($separator)$($file.Name)"
+    }
+
+    $errFiles
+
+}
+
+Write-Host "Execution Logs files details"
+
+WriteLogData -testName "joinDomainTests"
+
+WriteLogData -testName "prolicenseTypeTests"
+    
+WriteLogData -testName "extendExpDateTests"
+
+WriteLogData -testName "createVMTests"
